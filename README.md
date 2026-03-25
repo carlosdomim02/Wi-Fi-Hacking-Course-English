@@ -1,39 +1,39 @@
-# Configuración del Laboratorio
+# Lab Configuration
 
-Durante el desarrollo de esta sección (rama) se explicará en detalle cómo se ha creado el laboratorio y las peculiaridades de este. Aquí se detallará tanto la composición de los ficheros de configuración generales —como pueden ser el archivo [`docker-compose.yml`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/docker-compose.yml), [`launch.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/launch.sh) o [`stop.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/stop.sh)— como cada uno de los archivos que componen las distintas máquinas descritas en la [introducción](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course). Sin embargo, primero se deben conocer todas las tecnologías usadas.
+Throughout this section (branch), a detailed explanation will be provided of how the lab was created and of its particular features. This includes both the composition of the general configuration files—such as [`docker-compose.yml`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/docker-compose.yml), [`launch.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/launch.sh), and [`stop.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/stop.sh)—as well as each of the files that make up the different machines described in the [introduction](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English). However, all the technologies used must first be understood.
 
-## Tecnologías empleadas
+## Technologies Used
 
-A continuación se explican detalles que se deben tener en cuenta para poder comprender el funcionamiento real del laboratorio, desde las herramientas usadas para la simulación del entorno hasta algunos servicios de interés para conectar o proteger los distintos componentes de dicho entorno.
+The following explains details that should be taken into account in order to understand the real operation of the lab, from the tools used to simulate the environment to some services of interest for connecting or protecting the various components of that environment.
 
 ### Docker
 
-Docker consiste en una herramienta de código abierto administrada por la compañía Docker Inc., la cual tiene como principal objetivo el empaquetado de aplicaciones y su fácil despliegue tanto en entornos locales como en la nube [[1](https://learn.microsoft.com/es-es/dotnet/architecture/microservices/container-docker-introduction/docker-defined)]. Esta tecnología se basa en la ejecución de contenedores, unos componentes estandarizados y ejecutables que combinan el código de la aplicación que se desea empaquetar junto a todas sus dependencias (tanto de sistema operativo como de otras tecnologías). Esto hace que las aplicaciones ejecutadas con estos contenedores solo contengan lo mínimo necesario para su ejecución, haciéndolas muy portables (pueden ejecutarse casi en cualquier entorno) y eficientes. [[2](https://www.ibm.com/es-es/think/topics/docker)]
+Docker is an open-source tool managed by Docker Inc., whose main goal is to package applications and deploy them easily both in local environments and in the cloud [[1](https://learn.microsoft.com/es-es/dotnet/architecture/microservices/container-docker-introduction/docker-defined)]. This technology is based on the execution of containers, which are standardized and executable components that combine the code of the application to be packaged together with all its dependencies (both operating system dependencies and those of other technologies). This means that applications run through these containers only include the minimum necessary for execution, making them highly portable (they can run in almost any environment) and efficient [[2](https://www.ibm.com/es-es/think/topics/docker)].
 
-Los contenedores son posibles gracias a ciertas capacidades del kernel de Linux que permiten ejecutar procesos de forma aislada con la ayuda de los namespaces. Estos envuelven un recurso global del sistema (como puede ser un montaje del sistema de archivos, una interfaz de red, un nombre de host, etc.) en una abstracción que hace creer a los procesos dentro de este namespace que tienen su propia instancia aislada del recurso global, llegando a ser invisible incluso para el resto de procesos externos a este namespace. De esta forma, `/proc/<PID>/ns/` indica los namespaces de los que un proceso es miembro, mientras que `/var/run/netns/` representa un directorio donde se guardan los namespaces de las interfaces de red, haciendo posible que estas sean movidas a un proceso específico. [[3](https://docs.redhat.com/es/documentation/red_hat_enterprise_linux/8/html/managing_monitoring_and_updating_the_kernel/what-namespaces-are-setting-limits-for-applications)]
+Containers are possible thanks to certain Linux kernel capabilities that allow processes to run in isolation with the help of namespaces. These wrap a global system resource (such as a filesystem mount, a network interface, a hostname, etc.) in an abstraction that makes processes inside that namespace believe they have their own isolated instance of the global resource, even becoming invisible to the rest of the processes outside that namespace. Thus, `/proc/<PID>/ns/` indicates the namespaces of which a process is a member, while `/var/run/netns/` represents a directory where network interface namespaces are stored, making it possible for them to be moved to a specific process [[3](https://docs.redhat.com/es/documentation/red_hat_enterprise_linux/8/html/managing_monitoring_and_updating_the_kernel/what-namespaces-are-setting-limits-for-applications)].
 
-Con todo esto, se puede lograr una virtualización ligera que permite la ejecución de aplicaciones con tan solo las dependencias necesarias, consiguiendo así una gran ventaja sobre las máquinas virtuales tradicionales (MVs), las cuales conllevan una mayor sobrecarga debido a la obligatoriedad de instalar y ejecutar sistemas completos. Más concretamente, las ventajas respecto a las máquinas virtuales tradicionales son las siguientes: [[2](https://www.ibm.com/es-es/think/topics/docker)]
+All of this makes it possible to achieve lightweight virtualization that allows applications to run with only the necessary dependencies, thus gaining a major advantage over traditional virtual machines (VMs), which involve greater overhead because full systems must be installed and run. More specifically, the advantages over traditional VMs are the following [[2](https://www.ibm.com/es-es/think/topics/docker)]:
 
-- **Menor peso:** Los contenedores Docker solo portan la tecnología huésped mínima necesaria, junto a las dependencias indispensables. Además, no necesitan una máquina virtual completa ni un hypervisor que haga de intermediario entre el contenedor y el sistema anfitrión. Basta con el Docker Engine, una tecnología de función similar a un hypervisor, pero mucho menos pesada, ya que actúa como un proceso demonio. La propia ejecución del contenedor se representa como un proceso más en la máquina host, sin requerir una máquina virtual completa.
-- **Mayor portabilidad y productividad:** A diferencia de las MVs, los contenedores parten de una imagen que se escribe una única vez y se puede distribuir fácilmente entre diferentes sistemas, siendo independientes del entorno en el que se ejecutan.
-- **Mayor eficiencia y escalabilidad:** En especial en los sistemas en la nube, se tiende al uso de contenerización para ejecutar varias instancias de una misma aplicación rápidamente, gracias a la mayor velocidad de arranque/apagado de los contenedores y el uso reducido de recursos.
+- **Lower weight:** Docker containers only carry the minimum host technology required, together with the indispensable dependencies. In addition, they do not need a complete virtual machine or a hypervisor acting as an intermediary between the container and the host system. Docker Engine is enough: a technology with a function similar to a hypervisor, but far lighter, since it acts as a daemon process. The execution of the container itself is represented as just another process on the host machine, without requiring a full virtual machine.
+- **Greater portability and productivity:** Unlike VMs, containers start from an image that is written once and can easily be distributed across different systems, being independent of the environment in which they run.
+- **Greater efficiency and scalability:** Especially in cloud systems, containerization tends to be used to run multiple instances of the same application quickly, thanks to the faster startup/shutdown speed of containers and the reduced use of resources.
 
 ![image](https://github.com/user-attachments/assets/02ccb8b7-62d4-4470-bce2-d64be76bc97f)
 
-Debido a todas estas ventajas respecto a las MVs, se ha escogido esta tecnología para crear el laboratorio que utilizará el curso. De esta forma, se pueden crear fácilmente una serie de "mini máquinas virtuales" personalizadas para simular la red de una pequeña empresa o un hogar. Al tratarse de una virtualización poco pesada y eficiente, el laboratorio permitirá un mayor número de máquinas y una amplia personalización.
+Due to all these advantages over VMs, this technology was chosen to create the lab used by the course. In this way, it becomes easy to create a series of customized "mini virtual machines" to simulate the network of a small company or a household. Since it is a lightweight and efficient form of virtualization, the lab allows for a greater number of machines and broad customization.
 
-Para entender mejor cómo funcionan los contenedores, se deben entender primero las conocidas como imágenes. Un contenedor es una imagen en ejecución: la imagen es la plantilla que usa Docker Engine para ejecutar las instrucciones necesarias para lanzar un contenedor. Las imágenes Docker almacenan las dependencias junto al código de la aplicación o aplicaciones que ejecutan.
+To better understand how containers work, the well-known concept of images must first be understood. A container is an image in execution: the image is the template used by Docker Engine to execute the instructions necessary to launch a container. Docker images store dependencies together with the code of the application or applications they run.
 
-Docker no es la única tecnología de contenerización, aunque sí resulta la más popular. Otras opciones como LXC (contenedores nativos del kernel de Linux) son más tediosas de usar. En cambio, Docker facilita la creación, envío y control de versiones de imágenes (repositorios tipo Docker Hub). Docker parte del kernel de Linux, pero puede ejecutarse en Windows o macOS gracias a Docker Desktop, que usa una virtualización ligera (WSL 2) para proporcionar las características necesarias del kernel. [[5](https://docs.docker.com/desktop/setup/install/windows-install/)]
+Docker is not the only containerization technology, although it is the most popular. Other options such as LXC (native Linux kernel containers) are more cumbersome to use. In contrast, Docker makes it easier to create, distribute, and version images (Docker Hub-style repositories). Docker relies on the Linux kernel, but it can run on Windows or macOS thanks to Docker Desktop, which uses lightweight virtualization (WSL 2) to provide the necessary kernel features [[5](https://docs.docker.com/desktop/setup/install/windows-install/)].
 
 #### Dockerfile
 
-Docker facilita la creación de imágenes a través de especificaciones en ficheros Dockerfile, una de las opciones más populares. Los archivos Dockerfile son ficheros de texto que contienen las instrucciones necesarias para que Docker Engine cree las imágenes mediante `docker build`. [[6](https://docs.docker.com/build/concepts/dockerfile/)]
+Docker makes it easier to create images through specifications stored in Dockerfiles, one of the most popular options. Dockerfiles are text files containing the instructions necessary for Docker Engine to build images through `docker build` [[6](https://docs.docker.com/build/concepts/dockerfile/)].
 
-Normalmente estos ficheros parten de una imagen ya existente (para aprovechar la base mínima) y luego ejecutan una serie de instrucciones que permiten su personalización. Finalmente especifican un comando por defecto que se ejecuta cuando se lanza el contenedor. Con esto, Docker Engine crea una imagen Docker aplicando las instrucciones sobre la imagen base, y el resultado es un fichero de solo lectura que `docker run` usa para lanzar el contenedor.
+Normally these files start from an existing image (to take advantage of a minimal base) and then execute a series of instructions that allow customization. Finally, they specify a default command that is executed when the container is launched. In this way, Docker Engine creates a Docker image by applying the instructions on top of the base image, and the result is a read-only file used by `docker run` to launch the container.
 
-```
-# Ejemplo de fichero Dockerfile
+```dockerfile
+# Example Dockerfile
 # syntax=docker/dockerfile:1
 FROM ubuntu:22.04
 
@@ -52,11 +52,10 @@ CMD ["flask", "run", "--host", "0.0.0.0", "--port", "8000"]
 
 #### Docker-compose
 
-En entornos multicontenedor —donde se desean lanzar varias imágenes Docker a ejecución— puede complicarse la administración de los distintos contenedores. Por ello, existe una herramienta que facilita la construcción (`docker-compose build`) y la ejecución (`docker-compose up`) de entornos compuestos por múltiples contenedores Docker, haciendo sencillas labores como lanzar redes, servicios o usar volúmenes (directorios y/o ficheros) compartidos entre el host y el contenedor. Todo esto se consigue mediante la especificación de un fichero de configuración `YAML` (comúnmente `docker-compose.yml`), en el cual se indican los distintos servicios que se desean lanzar y las imágenes de las que parten, junto a opciones de configuración como las redes a las que se incorporan o el orden en el que se lanzan —respetando dependencias—. De esta forma, se consigue una administracción más sencilla y eficiente de los servicios ejecutados. [[7](https://docs.docker.com/compose/intro/compose-application-model/)]
+In multi-container environments—where several Docker images are meant to be launched—managing the different containers can become complicated. For this reason, there is a tool that facilitates the building (`docker-compose build`) and execution (`docker-compose up`) of environments composed of multiple Docker containers, making tasks such as launching networks, services, or using shared volumes (directories and/or files) between the host and the container straightforward. All of this is achieved through the specification of a `YAML` configuration file (commonly `docker-compose.yml`), where the different services to be launched and the images they are based on are indicated, together with configuration options such as the networks they join or the order in which they are launched—respecting dependencies. In this way, simpler and more efficient administration of the running services is achieved [[7](https://docs.docker.com/compose/intro/compose-application-model/)].
 
-
-```
-# Ejemplo de fichero docker-compose.yml
+```yaml
+# Example docker-compose.yml
 services:
   frontend:
     image: example/webapp
@@ -97,113 +96,113 @@ networks:
   back-tier: {}
 ```
 
-Debido a todas estas ventajas, es una tecnología muy usada en aplicaciones con arquitectura de microservicios. Sin embargo, el entorno que representa el laboratorio montado para entrenar las habilidades de ataque a redes WiFi se beneficia también de estas ventajas al seguir una arquitectura que se puede asimilar a la de microservicios [[8](https://anderfernandez.com/blog/tutorial-docker-compose/)]. Múltiples máquinas que se comunican entre sí para lograr una labor común: la ejecución de un entorno de pruebas. De esta forma, estos contenedores presentan un cierto grado de aislamiento al solo ser capaces de comunicarse entre sí según lo especificado entre los Dockerfile que crean las imágenes y el fichero `docker-compose.yml` que lanza el entorno, permitiendo un control sobre el grado de comunicación de los distintos contenedores que entran en juego. Además, se permite la conexión individual a cada una de las máquinas simuladas en el entorno (`docker-compose exec`), lo cual facilita la visión de un atacante que solo conoce su máquina a priori.
+Because of all these advantages, it is a technology widely used in applications with microservices architecture. However, the environment represented by the lab built to train WiFi attack skills also benefits from these advantages by following an architecture that can be compared to microservices [[8](https://anderfernandez.com/blog/tutorial-docker-compose/)]. Multiple machines communicate with each other to accomplish a common task: the execution of a testing environment. In this way, these containers present a certain degree of isolation by only being able to communicate with each other according to what is specified between the Dockerfiles that build the images and the `docker-compose.yml` file that launches the environment, allowing control over the degree of communication of the different containers involved. In addition, it is possible to connect individually to each of the machines simulated in the environment (`docker-compose exec`), which makes it easier to adopt the perspective of an attacker who initially only knows their own machine.
 
 ### Firewall
 ![image](https://github.com/user-attachments/assets/587b710e-e50f-49fa-b4ff-c19867ca9cdb)
 
-En la construcción del laboratorio se opta por obtener una infraestructura realista que, a pesar de no tener el mayor nivel de seguridad existente, refleje un nivel lo suficientemente alto como para asemejarse al mundo real. Por ello, se implementa una de las medidas de seguridad más conocidas y eficaces: un firewall. Se trata de un dispositivo —hardware o software— capaz de filtrar paquetes con el principal objetivo de prevenir accesos ilegítimos; sin embargo, también debe facilitar y administrar la comunicación entre dispositivos de confianza. Las principales amenazas que tratan de evitar son las siguientes: [[9](https://www.incibe.es/ciudadania/tematicas/configuraciones-dispositivos/cortafuegos)]
-- Accesos no autorizados: evitan tráfico de fuentes no confiables.
-- Propagación de malware: detectan tráfico malicioso que posiblemente porta malware, bloqueándolo para evitar contagios.
-- Denegación de servicios (DoS): pueden detectar flujos masivos de datos y bloquearlos.
-- Protección contra vulnerabilidades conocidas: reconocen tráfico malintencionado que intenta explotar vulnerabilidades.
+When building the lab, the goal was to obtain a realistic infrastructure that, although not offering the highest possible level of security, reflects a level high enough to resemble the real world. For that reason, one of the best-known and most effective security measures was implemented: a firewall. This is a device—hardware or software—capable of filtering packets with the main objective of preventing illegitimate access; however, it must also facilitate and manage communication between trusted devices. The main threats it attempts to avoid are the following [[9](https://www.incibe.es/ciudadania/tematicas/configuraciones-dispositivos/cortafuegos)]:
+- Unauthorized access: they prevent traffic from untrusted sources.
+- Malware propagation: they detect malicious traffic that may carry malware, blocking it to avoid spread.
+- Denial of Service (DoS): they can detect massive data flows and block them.
+- Protection against known vulnerabilities: they recognize malicious traffic attempting to exploit vulnerabilities.
 
-Existen distintos tipos de firewalls según el sistema que se desea proteger: [[10](https://www.paloaltonetworks.com/cyberpedia/types-of-firewalls)]
-- **Firewalls de red:** ubicados en la frontera entre redes —separan redes de confianza de las que no lo son— y aplican reglas de tráfico. Su objetivo principal es monitorear, controlar y decidir el tráfico al cual le da el visto bueno (o no) para pasar hacia la red de confianza. Normalmente este tipo de firewalls funciona con reglas que indican el tráfico que se deja pasar o no, pudiendo incluso realizar otras funcionalidades como el registro de paquetes.
+There are different types of firewalls depending on the system to be protected [[10](https://www.paloaltonetworks.com/cyberpedia/types-of-firewalls)]:
+- **Network firewalls:** placed at the boundary between networks—they separate trusted networks from untrusted ones—and apply traffic rules. Their main goal is to monitor, control, and decide which traffic is approved (or not) to pass into the trusted network. Normally, this type of firewall works through rules that indicate which traffic is allowed or not, and may also include other functionalities such as packet logging.  
   ![image](https://github.com/user-attachments/assets/7c71fbc6-9a77-4804-9ad4-b0a1fac6dcba)
-- **Firewalls basados en el host:** software instalado en el dispositivo a proteger, filtrando únicamente el tráfico de dicha máquina (de entrada, salida o que lo atraviesa). Se centra en detectar contenido malicioso, software malicioso u otras actividades maliciosas destinadas a infiltrarse en el sistema protegido. Pueden ser especialmente interesantes en combinación con los cortafuegos de perímetro anteriormente vistos, ya que ofrece una segunda capa de protección en dispositivos individuales sumada a la ya existente ofrecida por la propia red (por su firewall perimetral). 
+- **Host-based firewalls:** software installed on the device to be protected, filtering only that machine's traffic (incoming, outgoing, or passing through it). It focuses on detecting malicious content, malicious software, or other malicious activities intended to infiltrate the protected system. They can be especially interesting in combination with the previously mentioned perimeter firewalls, since they offer a second layer of protection on individual devices in addition to that already offered by the network itself (through its perimeter firewall).  
   ![image](https://github.com/user-attachments/assets/45a7375f-c505-4dc7-877a-caaa076a4527)
 
-Para este laboratorio se usa principalmente un firewall de red que limita el tráfico entre la red de confianza (interna y de servidores) y la red externa. En algunos hosts se utiliza un cortafuegos software individual para añadir funcionalidades —por ejemplo, permitir tráfico concreto, pero manteniendo un cierto control que solo permita el tráfico legítimo—. Además, se pueden considerar otro tipo de clasificaciones de estos dispositivos, como la tecnología usada para lograr su objetivo. En este caso, se centra la mirada en la única que se usa durante el laboratorio, el filtrado de paquetes:
+For this lab, a network firewall is mainly used to limit traffic between the trusted network (internal and server networks) and the external network. On some hosts, an individual software firewall is used to add functionalities—for example, allowing specific traffic while still maintaining a certain degree of control so that only legitimate traffic is allowed. In addition, other classifications of these devices can be considered, such as the technology used to achieve their objective. In this case, the focus is placed on the only one used during the lab: packet filtering.
 
 ![image](https://github.com/user-attachments/assets/085d9818-2e40-452d-afb4-a7eec41b6d06)
 
-Como su propio nombre indica, el filtrado de paquetes regula el tráfico entre redes gracias a reglas predefinidas que expresan patrones a aceptar o rechazar. Estas reglas pueden declarar atributos como IPs (origen/destino), puertos o protocolos que usan los paquetes trasmitidos para definir que tráfico dejan pasar y cual no. Aunque lo más común es definir reglas estáticas, existen mecanismos para crear o destruir reglas de manera dinámica —adaptando las reglas en tiempo real según el contexto y tráfico actual—. Además, se debe tener en cuenta si es *stateless* (analiza paquetes de forma individual) o *stateful* (tiene en cuenta conexiones previas). [[10](https://www.paloaltonetworks.com/cyberpedia/types-of-firewalls)] ara este laboratorio se ha escogido un firewall estático sin estado (en la maypría de casos, aunque existe alguna regla con estado para actuar sobre la respuesta de una petición), ya que es suficiente para crear una estructura DMZ realista.
+As its name indicates, packet filtering regulates traffic between networks thanks to predefined rules that express patterns to accept or reject. These rules may declare attributes such as IP addresses (source/destination), ports, or protocols used by the transmitted packets in order to define which traffic is allowed through and which is not. Although the most common approach is to define static rules, there are mechanisms for creating or destroying rules dynamically—adapting rules in real time according to the context and current traffic. In addition, it is important to consider whether it is *stateless* (analyzes packets individually) or *stateful* (takes previous connections into account) [[10](https://www.paloaltonetworks.com/cyberpedia/types-of-firewalls)]. For this lab, a static stateless firewall was chosen (in most cases, although there is some stateful rule that acts on the response to a request), since that is enough to create a realistic DMZ structure.
 
 #### DMZ
-Para construir un entorno realista, el cual pueda asemejarse al de una empresa real, se ha optado por crear una DMZ o zona desmilitarizada. Se trata de una red aislada dentro de la red interna de la organización, donde se encuentran exclusivamente aquellos dispositivos que ofrecen servicios accesibles desde Internet (por ejemplo, un servidor web o de correo). Esta partición suele implicar un mayor nivel de protección en la red interna que en la red de servidores —esta última debe ser accesible desde el exterior—. Normalmente la red interna busca un nivel de protección alto, impidiendo cualquier tráfico entrante que no provenga de una conexión iniciada por un dispositivo interno a esta red. Además, el tráfico entre las redes (interna, DMZ y externa) es monitoreado y controlado por un firewall. [[11](https://www.incibe.es/empresas/blog/dmz-y-te-puede-ayudar-proteger-tu-empresa)]
+To build a realistic environment, one that can resemble that of a real company, a DMZ or demilitarized zone was created. This is an isolated network within the organization's internal network where only those devices offering services accessible from the Internet are located (for example, a web or mail server). This partition usually implies a higher level of protection on the internal network than on the server network—the latter must be accessible from the outside. Normally, the internal network seeks a high level of protection, preventing any incoming traffic that does not come from a connection initiated by a device inside that network. In addition, traffic between the networks (internal, DMZ, and external) is monitored and controlled by a firewall [[11](https://www.incibe.es/empresas/blog/dmz-y-te-puede-ayudar-proteger-tu-empresa)].
 ![image](https://github.com/user-attachments/assets/e9aafaab-6ce4-40c8-9158-4f68a9e5e2ee)
 
-Este firewall es el encargado de controlar el tráfico entre las redes vistas, de tal forma que normalmente restringe en mayor medida a la red interna (no dejando iniciar conexiones desde fuera de esta, ya sea desde la red externa o desde la DMZ) que a aquella encargada ubicar los servidores accesibles desde Internet (normalmente también accesibles desde la red interna, pero no a la inversa). Esta separación se debe a que los servidores que son accesibles desde Internet son más susceptibles a sufrir un ataque que pueda comprometer su seguridad. Así, si un ciberdelincuente comprometiera un servidor de la DMZ, seguiría siendo complicado acceder a la red local gracias al filtrado. [[11](https://www.incibe.es/empresas/blog/dmz-y-te-puede-ayudar-proteger-tu-empresa)]
+This firewall is responsible for controlling traffic between the networks described above, in such a way that it normally restricts the internal network more heavily (not allowing connections to be initiated from outside it, whether from the external network or from the DMZ) than the network that hosts the servers accessible from the Internet (normally also accessible from the internal network, but not the other way around). This separation exists because servers accessible from the Internet are more likely to suffer attacks that could compromise their security. Thus, even if a cybercriminal were to compromise a server in the DMZ, it would still be difficult to access the local network thanks to filtering [[11](https://www.incibe.es/empresas/blog/dmz-y-te-puede-ayudar-proteger-tu-empresa)].
 ![image](https://github.com/user-attachments/assets/93909e2c-d185-4ee1-a7aa-faeb89981bfb)
 ![image](https://github.com/user-attachments/assets/7fb9e819-baf3-4fe5-803b-c381a661c970)
 
-Por otro lado, existe otra forma de construir este tipo de estructura, el uso de un doble firewall con el objetivo de que uno primero (el que hace contacto directo con la red externa y la DMZ) sea el encargado de establecer las reglas que protegen la DMZ (menos restrictivas). Mientras, otro segundo (que hace contacto con el anterior y la red interna) se encarga de establecer reglas más restrictivas para proteger la red interna. [[11](https://www.incibe.es/empresas/blog/dmz-y-te-puede-ayudar-proteger-tu-empresa)] Este tipo de configuración puede proporcionar una estructura más robusta y modular, sin embargo, en el laboratorio se opta por el uso de un único cortafuegos al tratarse de una estructura que no tiene un gran tamaño, para la cual es suficiente un único dispositivo de estas características.
+On the other hand, there is another way to build this type of structure: using a double firewall, so that one first firewall (the one in direct contact with the external network and the DMZ) is responsible for establishing the rules that protect the DMZ (less restrictive), while a second one (which is connected to the first and to the internal network) establishes more restrictive rules to protect the internal network [[11](https://www.incibe.es/empresas/blog/dmz-y-te-puede-ayudar-proteger-tu-empresa)]. This type of configuration can provide a more robust and modular structure; however, in the lab a single firewall was chosen because the structure is not very large, and one such device is sufficient.
 ![image](https://github.com/user-attachments/assets/28e804c6-5b6a-439d-89e8-3f8200d17a8d)
 
 #### iptables
-Una manera típica y flexible de integrar reglas de firewall en máquinas con kernel de Linux coniste en usar iptables. Esta herramienta basa su funcionamiento en Netfilter —un poderoso subsistema de redes del Kernel de Linux— el cual ofrece capacidades para el filtrado de paquetes (con y sin estado), así como para otros servicios —por ejemplo, NAT o enmascaramiento de IP—. De esta forma, iptables actuará como interfaz de control sobre Netfilter, pudiendo crear o destruir reglas de firewall mediante el uso de comandos de Shell. [[12](https://docs.redhat.com/es/documentation/red_hat_enterprise_linux/6/html/security_guide/sect-security_guide-firewalls#sect-Security_Guide-Firewalls-Netfilter_and_IPTables)]
+A typical and flexible way to integrate firewall rules into machines running the Linux kernel is to use `iptables`. This tool bases its operation on Netfilter—a powerful Linux kernel networking subsystem—which provides capabilities for packet filtering (stateful and stateless), as well as other services such as NAT or IP masking. In this way, `iptables` acts as a control interface over Netfilter, making it possible to create or destroy firewall rules using Shell commands [[12](https://docs.redhat.com/es/documentation/red_hat_enterprise_linux/6/html/security_guide/sect-security_guide-firewalls#sect-Security_Guide-Firewalls-Netfilter_and_IPTables)].
 
 ### Honeypot
-Para seguir con la dinámica de crear un laboratorio realista que implemente contramedidas, se ha optado por instaurar un Honeypot en uno de los servidores de la DMZ. Normalmente esta herramienta monitoriza o detecta ciberataques para aprender de ellos y evitar su impacto futuro. De esta forma, los Honeypot suelen ser los primeros en detectar intentos de ataque —también se consideran parte de los sistemas de detección de intrusiones o IDS por sus siglas en inglés—, sin exponer información u otros sistemas críticos —aunque suelen imitarlos en la medida de lo posible sin desvelar detalles cruciales—. [[13](https://www.incibe.es/empresas/blog/honeypot-una-trampa-para-los-ciberdelincuentes)]
+To continue with the idea of creating a realistic lab that implements countermeasures, a honeypot was installed on one of the DMZ servers. Normally, this tool monitors or detects cyberattacks in order to learn from them and avoid their future impact. In this way, honeypots are usually the first to detect attack attempts—they are also considered part of intrusion detection systems, or IDSs—without exposing information or other critical systems, although they usually imitate them as much as possible without revealing crucial details [[13](https://www.incibe.es/empresas/blog/honeypot-una-trampa-para-los-ciberdelincuentes)].
 
-Para poder engañar al ciberdelincuente, un Honeypot crea servicios falsos proclives a ser atacados (servidor web, base de datos) y registra la manera usada por el atacante para realizar acciones maliciosas. Esto permite al equipo de ciberseguridad comprender técnicas y patrones, así como crear contramedidas efectivas —además de evitar que el ataque sea recibido directamente por el sistema protegido en caso de que los ciberdelincuentes caigan en la trampa que supone un Honeypot—. [[13](https://www.incibe.es/empresas/blog/honeypot-una-trampa-para-los-ciberdelincuentes)]
+To deceive cybercriminals, a honeypot creates fake services that are likely to be attacked (web server, database) and records the method used by the attacker to carry out malicious actions. This allows the cybersecurity team to understand techniques and patterns, as well as create effective countermeasures—in addition to preventing the attack from being directed at the protected system if the cybercriminals fall into the honeypot trap [[13](https://www.incibe.es/empresas/blog/honeypot-una-trampa-para-los-ciberdelincuentes)].
 
-Existen varios tipos de Honeypots en función del nivel de interacción que ofrecen al atacante, de forma, que cuanto mayor es este nivel de interacción, más realista resulta, pudiendo engañar en mayor medida a los ciberdelincuentes: [[14](https://pmc.ncbi.nlm.nih.gov/articles/PMC8036602/?sec1-sensors-21-02433)]
-- **Nivel bajo:** no dispone de servicios reales, sino que simula algunos básicos, ofreciendo una rápida y sencilla instalación y configuración. Sin embargo, es un sistema limitado en cuanto a la obtención de datos relevantes, ya que solo registran cuestiones sencillas como la fecha y hora del ataque, IPs involucradas y puertos.
-- **Nivel medio:** emulan servicios con un mayor nivel de detalle, llegando incluso a ser capaces de responder a los atacantes. Este tipo de dispositivos pueden ser utilizados para capturar malware y/o simular vulnerabilidades conocidas, pero están sometidos a un mayor riesgo al dejar que los atacantes puedan hacer mayores interacciones, de forma que una mala configuración puede comprometer al sistema real. En cambio, suele ser una opción con un buen balance entre riesgo y detalle de la información que recaban.
-- **Nivel alto:** se basa en el uso de sistemas reales (máquinas vulnerables completas normalmente ubicadas dentro de la red interna de la organización) que imitan entornos de producción reales. Es la opción que más información puede recabar, permitiendo una gran flexibilidad de acciones realizables por los atacantes, sin embargo, esta ventaja suele estar atada a un alto riesgo (se está creando una máquina vulnerable dentro de la red interna).
+There are several types of honeypots depending on the level of interaction they offer to the attacker. The higher this level of interaction, the more realistic they are, and the more effectively they can deceive cybercriminals [[14](https://pmc.ncbi.nlm.nih.gov/articles/PMC8036602/?sec1-sensors-21-02433)]:
+- **Low interaction:** it does not provide real services, but rather simulates some basic ones, offering quick and easy installation and configuration. However, it is limited in terms of obtaining relevant data, since it only records simple details such as the date and time of the attack, the IPs involved, and ports.
+- **Medium interaction:** they emulate services with a higher level of detail, and may even be capable of responding to attackers. These devices can be used to capture malware and/or simulate known vulnerabilities, but they are subject to greater risk by allowing more interaction from attackers, so a bad configuration may compromise the real system. In contrast, they usually offer a good balance between risk and the level of detail in the information they gather.
+- **High interaction:** based on the use of real systems (fully vulnerable machines usually located inside the organization's internal network) that imitate real production environments. This option can gather the most information and offers great flexibility for attacker actions; however, this advantage is usually tied to high risk (a vulnerable machine is being created inside the internal network).
 
-Para este laboratorio se escoge un Honeypot de **nivel medio**, ya que no requiere tantos recursos como el nivel alto y ofrece credibilidad suficiente para entender como funcionan estos sistemas.
+For this lab, a **medium-interaction** honeypot was chosen, since it does not require as many resources as a high-interaction honeypot and offers sufficient credibility to understand how these systems work.
 
 #### Cowrie
-Para implementar en el laboratorio un Honeypot se ha optado por usar la herramineta conocida como Cowrie, la cual ofrece un servicio falso tanto de SSH como de Telnet, principalmente diseñado para el registro de ataques de fuerza bruta. Cuenta con dos opciones de funcionamiento según el nivel de interacción deseado: el modo shell que emula un sistema UNIX a través de Python y el modo de alta interacción o modo Proxy, el cual usa servicios reales de SSH y Telnet, pudiendo manejarlos incluso desde servidores emulados con QEMU. [[15](https://docs.cowrie.org/en/latest/README.html#what-is-cowrie)]
+To implement a honeypot in the lab, the tool known as Cowrie was chosen. It offers a fake SSH and Telnet service, mainly designed to log brute-force attacks. It supports two operating modes depending on the desired level of interaction: shell mode, which emulates a UNIX system through Python, and high-interaction mode, or Proxy mode, which uses real SSH and Telnet services and can even handle them from servers emulated with QEMU [[15](https://docs.cowrie.org/en/latest/README.html#what-is-cowrie)].
 
-En el modo shell, Cowrie puede crear un sistema de ficheros basado en Debian 5.0 con capacidades completas como añadir o borrar ficheros. Además, permite añadir contenido a ficheros para engañar al atacante —por ejemplo, rellenar `/etc/passwd` con contenido verosímil—. También es capaz de almacenar ficheros que un atacante descargue con `wget`, `curl` o protocolos como SFTP o SCP, lo cual facilita el registro de muestras de malware. [[15](https://docs.cowrie.org/en/latest/README.html#what-is-cowrie)]
+In shell mode, Cowrie can create a Debian 5.0-based filesystem with full capabilities such as adding or deleting files. In addition, it allows content to be added to files in order to deceive the attacker—for example, filling `/etc/passwd` with realistic-looking content. It is also capable of storing files that an attacker downloads with `wget`, `curl`, or protocols such as SFTP or SCP, which facilitates the collection of malware samples [[15](https://docs.cowrie.org/en/latest/README.html#what-is-cowrie)].
 
-De esta forma, para el laboratorio resulta ideal el formato de media interacción, ya que no es necesario tener los servicios reales, sino que basta con los servicios emulados que permiten una acción interesante como el manejo de ficheros y usuarios (a través de "/etc/passwd"). Por otro lado, este sistema requiere menos recursos, lo cual es positivo para introducirlo dentro de uno de los servidores en lugar de necistar otras máquinas emuladas con QEMU. 
+Thus, for the lab, the medium-interaction format is ideal, since there is no need to have real services; the emulated services are enough to allow interesting actions such as handling files and users (through `/etc/passwd`). On the other hand, this system requires fewer resources, which is beneficial for introducing it into one of the servers instead of requiring other QEMU-emulated machines.
 
 ### VPN 
-Otra posible contramedida interesante es la VPN o red privada virtual. Esta tecnología busca la comunicación entre dos dispositivos a través de una red privada creada sobre Internet —permite la comunicación segura mediante una red pública insegura—. Su funcionamiento se basa en ocultar direcciones IP y cifrar datos para que nadie no autorizado pueda leerlos. [[16](https://aws.amazon.com/es/what-is/vpn/)]
+Another potentially interesting countermeasure is the VPN, or virtual private network. This technology enables communication between two devices through a private network created over the Internet—it allows secure communication across an insecure public network. Its operation is based on hiding IP addresses and encrypting data so that no unauthorized party can read it [[16](https://aws.amazon.com/es/what-is/vpn/)].
 
-Una conexión VPN consta normalmente de dos dispositivos: un cliente VPN (máquina local desde la cual se inicia la comunicación) y un servidor VPN. Tras establecer la conexión, cualquier comunicación del dispositivo local pasará por el servidor mediante un túnel seguro —a partir de ese punto el origen aparente de los datos es el servidor—. Este túnel impide la visión de los datos a terceros, incluso a los proveedores de servicios. Esto es posible gracias a un fuerte cifrado de la comunicación al paso del túnel entre máquina y servidor. [[16](https://aws.amazon.com/es/what-is/vpn/)]
+A VPN connection normally consists of two devices: a VPN client (the local machine from which communication is initiated) and a VPN server. Once the connection is established, any communication from the local device passes through the server via a secure tunnel—from that point onward, the apparent origin of the data is the server. This tunnel prevents third parties, including service providers, from seeing the data. This is possible thanks to strong encryption of the communication while it passes through the tunnel between the client machine and the server [[16](https://aws.amazon.com/es/what-is/vpn/)].
 
-Debido a todas las ventajas expuestas anteriormente se opta por esta tecnología para posibilitar la creacción de una comunicación externa hacia dentro de la red interna de manera segura. Esto simula un comportamiento típico en el cual una empresa puede conceder un acceso remoto a la red corporativa a sus trabajadores.
+Because of all the advantages described above, this technology was chosen to enable the creation of a secure external-to-internal communication path. This simulates a typical scenario in which a company can grant its workers remote access to the corporate network.
 
 #### OpenVPN
-Una de las herramientas más populares para la creación de un servidor VPN es OpenVPN. Esta tecnología de código abierto permite la creación de un servidor que establece un túnel seguro con los clientes. Además, ofrece el software cliente necesario para que estos puedan establecer la conexión con el servidor VPN. [[17](https://nordvpn.com/es/blog/what-is-openvpn)]
+One of the most popular tools for creating a VPN server is OpenVPN. This open-source technology makes it possible to create a server that establishes a secure tunnel with clients. In addition, it provides the client software necessary for those clients to connect to the VPN server [[17](https://nordvpn.com/es/blog/what-is-openvpn)].
 
-Para establecer estas comunicaciones seguras OpenVPN consta de varios pasos, empezando por el proceso de autenticación en el servidor VPN, seguido de la configuración del túnel; hasta la encapsulación y cifrado de los datos que se desean transmitir y finalizando con la transmisión de dicha información a través del túnel creado: [[17](https://nordvpn.com/es/blog/what-is-openvpn)]
+To establish these secure communications, OpenVPN consists of several steps, beginning with the authentication process on the VPN server, followed by tunnel configuration, then the encapsulation and encryption of the data to be transmitted, and finally the transmission of that information through the created tunnel [[17](https://nordvpn.com/es/blog/what-is-openvpn)].
 ![image](https://github.com/user-attachments/assets/7567b755-2db1-4440-88b0-25526a69420a)
 
-### Simulación Access-Point
-Además de crear máquinas y establecer contramedidas, es necesario crear puntos de acceso inalámbricos para los ataques contra redes Wi-Fi que se estudiarán. En un entorno simulado no existen ni interfaces inalámbricas por defecto, ni Docker puede crearlas dentro de sus redes. Por tanto, se aprovechan funcionalidades del kernel de Linux. En concreto se utiliza el módulo de pruebas `mac80211_hwsim`, un simulador por software de radios IEEE 802.11 —interfaces inalámbricas para WiFi—, pensado para pruebas y desarrollo en Linux. Este módulo genera múltiples interfaces Wi-Fi virtuales que emulan tarjetas reales y se comunican entre ellas al compartir canal (comando `modprobe mac80211_hwsim radios=<num-interfaces>`). [[18](https://kernel.org/doc/html/next/networking/mac80211_hwsim/mac80211_hwsim.html)]
+### Access Point Simulation
+In addition to creating machines and establishing countermeasures, it is necessary to create wireless access points for the Wi-Fi network attacks that will be studied. In a simulated environment, there are no wireless interfaces by default, nor can Docker create them within its networks. Therefore, Linux kernel features are used. Specifically, the `mac80211_hwsim` test module is used, a software simulator of IEEE 802.11 radios—wireless interfaces for WiFi—intended for testing and development in Linux. This module generates multiple virtual Wi-Fi interfaces that emulate real cards and communicate with each other by sharing a channel (command `modprobe mac80211_hwsim radios=<num-interfaces>`) [[18](https://kernel.org/doc/html/next/networking/mac80211_hwsim/mac80211_hwsim.html)].
 
-Gracias a la simulación de este tipo de interfaces se puede optar por el uso de tecnologías que simulan el comportamiento de las redes inalámbricas, en concreto se usan Hostapd y wpa_supplicant para establecer el punto de acceso y comunicarse a él respectivamente. De esta forma, Hostapd se basa en el uso de una interfaz inalámbrica (real o simulada) para generar un punto de acceso IEEE 802.11 que es capaz de usar IEEE 802.1X/WPA/WPA2/EAP/RADIUS en redes WiFi [[19](https://wireless.docs.kernel.org/en/latest/en/users/documentation/hostapd.html)]. Por otro lado, wpa_supplicant maneja interfaces inalámbricas y los detalles necesarios del protocolo IEEE 802.11 para la conexión con puntos de acceso WiFi. [[20](https://docs.voidlinux.org/config/network/wpa_supplicant.html)]
+Thanks to the simulation of these kinds of interfaces, it is possible to use technologies that simulate the behavior of wireless networks. Specifically, Hostapd and `wpa_supplicant` are used to establish the access point and connect to it, respectively. Hostapd is based on the use of a wireless interface (real or simulated) to generate an IEEE 802.11 access point capable of using IEEE 802.1X/WPA/WPA2/EAP/RADIUS in WiFi networks [[19](https://wireless.docs.kernel.org/en/latest/en/users/documentation/hostapd.html)]. On the other hand, `wpa_supplicant` handles wireless interfaces and the protocol details necessary for connecting to WiFi access points under IEEE 802.11 [[20](https://docs.voidlinux.org/config/network/wpa_supplicant.html)].
 
-Por último, se aprecia como uno de los protocolos de autenticación WiFi mencionados entre las capacidades de Hostapd (y como parte de los estudiados) es EAP/RADIUS, de forma que es necesario considerar la opción de lanzar un servidor con esta tecnología de autenticación. Por ello se opta para esta misión por el servicio más extendido para la configuración de servidores RADIUS de autenticación, FreeRADIUS. [[21](https://www.freeradius.org/)]
+Finally, one of the WiFi authentication protocols mentioned among Hostapd's capabilities (and among those studied) is EAP/RADIUS, so the option of launching a server with this authentication technology must be considered. For this purpose, the most widely used service for configuring RADIUS authentication servers was chosen: FreeRADIUS [[21](https://www.freeradius.org/)].
 
 ### Kali Linux
-La principal idea de este laboratorio es la puesta en prueba de herramientas para lanzar ataques contra redes inalámbricas, de forma que se opta por usar un dispositivo Kali Linux (una de las máquinas Docker) para la realización de los ataques. Esto se debe a la puesta a punto y las herramientas con las que cuenta Kali para la ejecución de ataques de toda índole, haciendo de esta una opción ideal para aprender y ahorrar costosos pasos de configuración. Kali Linux consta de un sistema de código abierto basado en la distribución Debian, junto a un montón de herramientas y funcionalidades dedicadas a la seguridad y las pruebas de penetración (especialmente interesante para el objetivo de este laboratorio). [[22](https://www.kali.org/)]
+The main idea behind this lab is to test tools used to launch attacks against wireless networks, so a Kali Linux device (one of the Docker machines) was chosen to perform the attacks. This is due to Kali's readiness and the tools it includes for carrying out attacks of all kinds, making it an ideal option for learning while avoiding costly setup steps. Kali Linux is an open-source system based on the Debian distribution, together with a large set of tools and features dedicated to security and penetration testing (especially relevant to the goal of this lab) [[22](https://www.kali.org/)].
 
-Dentro de las herramientas proporcionadas por el entorno de Kali Linux, las más destacadas para este proyecto son aquellas relacionadas con ataques a redes WiFi. En concreto, se destaca el uso del paquete "aircrack-ng", el cual cuenta con un conjunto de herramientas para la captura de tráfico inalámbrico o la ruptura/captura de contraseñas. [[23](https://www.infosecinstitute.com/resources/penetration-testing/kali-linux-top-8-tools-for-wireless-attacks/)]
+Among the tools provided by the Kali Linux environment, the most relevant for this project are those related to WiFi network attacks. In particular, the use of the `aircrack-ng` package stands out, since it includes a set of tools for wireless traffic capture and password cracking/capture [[23](https://www.infosecinstitute.com/resources/penetration-testing/kali-linux-top-8-tools-for-wireless-attacks/)].
 
 ### ShellShock
-Además, de los ataques directamente relacionado con redes inalámbricas, se deben considerar otros ataques que permitan una verdadera explotación de todo lo introducido en el laboratorio. De esta forma surge la idea de integrar algunas máquinas que presentan servicios vulnerables con el objetivo de mostrar los efectos de lo que sucede cuando un atacante consigue un acceso ilegítimo en nuestra red. Es por esto que una de las máquinas vulnerables introducidas será un dispositivo que cuente con una popular vulnerabilidad en sistemas UNIX conocida como ShellShock (CVE-2014-6271) [[24](https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2014-6271))].
+In addition to the attacks directly related to wireless networks, other attacks that allow a more complete exploitation of everything introduced in the lab must also be considered. This led to the idea of integrating several machines exposing vulnerable services, with the goal of showing the effects of what happens when an attacker gains illegitimate access to our network. For this reason, one of the vulnerable machines introduced is a device that includes a well-known vulnerability in UNIX systems called ShellShock (CVE-2014-6271) [[24](https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2014-6271))].
 
-La vulnerabilidad ShellShock, también conocida como Bashdoor (y con nombre oficial GNU Bash Remote Code Execution Vulnerability), consistía en un ataque que permitía la ejecución de código remoto en millones de servidores y otros computadores en todo el mundo.  Este error se fundamenta principalmente en el uso de servidores HTTP que se ejecutan en FastCGI o CGI (permite la ejecución de scripts externos), lo cual da la posibilidad de exponer una consola Bash a los usuarios en una cierta URI como "http://miweb.com/cgi-bin/script.sh". Esto hace que el servidor ejecute "script.sh" con algún intérprete como Bash. [25](https://journal.espe.edu.ec/ojs/index.php/geeks/article/view/279)]
+The ShellShock vulnerability, also known as Bashdoor (officially GNU Bash Remote Code Execution Vulnerability), consisted of an attack that allowed remote code execution on millions of servers and other computers around the world. This flaw was mainly based on the use of HTTP servers running FastCGI or CGI (which allow the execution of external scripts), making it possible to expose a Bash console to users at a URI such as `http://myweb.com/cgi-bin/script.sh`. This causes the server to execute `script.sh` with an interpreter such as Bash [25](https://journal.espe.edu.ec/ojs/index.php/geeks/article/view/279)].
 
-Esta exposición se hace realmente peligrosa porque estos servidores suelen pasar una serie de variables de entorno a los scripts que ejecutan. De esta forma, se aprovecha la posibilidad que ofrece Bash para dar valor a una variable de entorno con una función. Es más, Bash permite incluso en versiones vulnerables ejecutar cualquier comando que estuviera después de una función cerrada: [25](https://journal.espe.edu.ec/ojs/index.php/geeks/article/view/279)]
-```
+This exposure becomes truly dangerous because such servers usually pass a set of environment variables to the scripts they execute. In this way, the possibility offered by Bash to assign a function as the value of an environment variable is exploited. Moreover, in vulnerable versions Bash even allows any command appearing after a closed function to be executed [25](https://journal.espe.edu.ec/ojs/index.php/geeks/article/view/279)].
+```http
 GET /cgi-bin/vulnerable HTTP/1.1
 User-Agent: () { :; }; /bin/cat /etc/passwd
 ```
-Esto sería un ejemplo de cómo ejecutar un comando (`/bin/cat /etc/passwd`) gracias a alterar la cabecera de una petición HTTP para cambiar el `User-Agent`, lo cual se traduce en la instauración de esta función y lo que le sigue en la variable de entorno `HTTP_USER_AGENT`, que luego será pasada al script ejecutado de tal forma que éste ejecute el comando malicioso.
-```
+This would be an example of how to execute a command (`/bin/cat /etc/passwd`) by altering the header of an HTTP request to change the `User-Agent`, which translates into placing that function and everything following it into the `HTTP_USER_AGENT` environment variable. This variable is then passed to the script being executed, causing it to run the malicious command.
+```bash
 HTTP_USER_AGENT='() { :; }; /bin/cat /etc/passwd'
 ```
 
 ### Metasploitable3
-Por otro lado, se ha instaurado una famosa máquina que expone una serie de servicios vulnerables, diseñada así con el objetivo de servir como entrenamiento para los expertos en ciberseguridad ofensiva que desean reforzar sus habilidades, lo cual encaja a la perfección con el objetivo principal de este proyecto. Esta máquina es Metasploitable 3 [[26](https://www.rapid7.com/blog/post/2016/11/15/test-your-might-with-the-shiny-new-metasploitable3/)], una máquina virtual de código abierto que surge del proyecto Metasploitable financiado por Rapid7 [[27](https://www.rapid7.com/products/metasploit/)]. En concreto, la versión Metasploitable 3 parte de una máquina Ubuntu 14.04 (la usada para este laboratorio) o Windows Server 2008, instaurando servicios con vulnerabilidades como SSH o MySQL.
+On the other hand, a well-known machine exposing a number of vulnerable services was also included, designed precisely to serve as training for offensive cybersecurity professionals who want to strengthen their skills, which fits perfectly with the main goal of this project. This machine is Metasploitable 3 [[26](https://www.rapid7.com/blog/post/2016/11/15/test-your-might-with-the-shiny-new-metasploitable3/)], an open-source virtual machine arising from the Metasploitable project funded by Rapid7 [[27](https://www.rapid7.com/products/metasploit/)]. Specifically, Metasploitable 3 is based on an Ubuntu 14.04 machine (the one used for this lab) or Windows Server 2008, deploying services with vulnerabilities such as SSH or MySQL.
 
-Metasploit no solo es un proyecto que ofrece máquinas vulnerables, sino que también ayuda a explotarlas gracias a una gran base de datos que permite a los usuarios la importación y exportación de exploits. Esto facilita en gran medida poder encontrar el exploit ideal no solo para conseguir acceso en las máquinas Metasploitable, sino que también resulta de utilidad para otros servicios reales [[28](https://riull.ull.es/xmlui/bitstream/handle/915/28744/Pentesting%20en%20entornos%20controlados.pdf)]. Esta funcionalidad dada por Metasploit facilita mucho los primeros pasos de los profesionales que se introducen en el mundo de la ciberseguridad, siendo este el principal motivo de su uso en el entorno diseñado.
+Metasploit is not only a project that offers vulnerable machines, but also helps exploit them thanks to a large database that allows users to import and export exploits. This makes it much easier to find the ideal exploit not only to gain access to Metasploitable machines, but also for other real services [[28](https://riull.ull.es/xmlui/bitstream/handle/915/28744/Pentesting%20en%20entornos%20controlados.pdf)]. This functionality provided by Metasploit greatly facilitates the first steps of professionals entering the world of cybersecurity, which is the main reason for its use in the designed environment.
 
-## Esquema del laboratorio
-Aquí podemos ver la configuración del laboratorio, tanto desde un punto de vista más visual o esquemático:
+## Lab Diagram
+Here we can see the configuration of the lab, both from a more visual and more schematic point of view:
 ![Esquema-Redes](https://github.com/user-attachments/assets/194803dd-dcd5-4c80-b6f5-c387f4b2d2bc)
 
-```
-# Esquema general del repositorio
+```text
+# General repository layout
 📁 dmz
 ├── 📁 dmz1
 │   ├── Dockerfile
@@ -259,9 +258,9 @@ Aquí podemos ver la configuración del laboratorio, tanto desde un punto de vis
 📄 stop.sh
 ```
 
-A continuación se describen con más detalle los ficheros que construyen el entorno, empezando por algunos detalles del fichero [`docker-compose.yml`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/docker-compose.yml) que define las distintas máquinas y redes internas creadas con Docker:
-```
-# Fichero docker-compose.yml
+Below, the files that build the environment are described in more detail, starting with some details of the [`docker-compose.yml`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/docker-compose.yml) file that defines the different machines and internal networks created with Docker:
+```yaml
+# docker-compose.yml file
 ...
 networks:  
   external-network: 
@@ -285,16 +284,16 @@ networks:
         - subnet: 10.5.2.0/24
           gateway: 10.5.2.254
 ```
-```
-# Ficheros start.sh con conexiones cableadas
+```bash
+# start.sh files with wired connections
 ...
 route add default gw 10.5.0.1
 route del default gw 10.5.0.254
 ...
 ```
-Lo primero que hay que destacar es cómo se crean las distintas subredes usadas para definir el laboratorio, donde se aprecia que se usa la dirección finalizada en `.254` de cada una de ellas a modo de gateway, lo cual difiere de lo mencionado en la introducción, donde se toman las direcciones terminadas en `.1` como tal (las de las interfaces correspondientes de `fw`). Esto se debe a que en otros lugares, como la definición de cada máquina, se usan estas direcciones:
-```
-# Algunos ejemplos
+The first thing to note is how the different subnets used to define the lab are created. It can be seen that the address ending in `.254` is used as the gateway in each of them, which differs from what was mentioned in the introduction, where the addresses ending in `.1` were taken as such (those corresponding to the interfaces of `fw`). This is because in other places, such as the definition of each machine, these addresses are used:
+```yaml
+# Some examples
 ...
 # Firewall device
   fw: 
@@ -325,11 +324,11 @@ Lo primero que hay que destacar es cómo se crean las distintas subredes usadas 
     tty: true
 ...
 ```
-`docker-compose` no permite escribir dos veces la misma dirección IP en un fichero [`docker-compose.yml`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/docker-compose.yml), de forma que se toman estas direcciones `.254` para poder definir los gateway, pero se cambia esta configuración dentro de los ficheros `start.sh` donde resulta necesario. Además, se observa en el ejemplo anterior que las máquinas reciben su configuración de red (IP y subred) al definir la propia máquina en este fichero `.yml`.
+`docker-compose` does not allow the same IP address to be written twice in a [`docker-compose.yml`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/docker-compose.yml) file, so these `.254` addresses are used in order to define the gateways, but that configuration is then changed inside the `start.sh` files where necessary. In addition, the previous example shows that the machines receive their network configuration (IP and subnet) when the machine itself is defined in this `.yml` file.
 
-Por otro lado, se aprecia cómo en todas las máquinas se define la opción `privileged: true`, dando permisos elevados sobre la máquina que hará de host. Estos permisos son necesarios para trabajar con interfaces de red y otros detalles, pero especialmente en las máquinas inalámbricas que no toman ninguna de las redes (`network_mode: "none"`) vistas anteriormente, al ser necesario crear las interfaces inalámbricas desde una máquina con kernel Linux que actúe como anfitriona (la máquina usada para lanzar el laboratorio):
-```
-# Algunos ejemplos dentro de docker-compose.yml
+On the other hand, it can be seen that all machines define the `privileged: true` option, granting elevated permissions on the machine that will act as host. These permissions are necessary to work with network interfaces and other details, but especially on the wireless machines, which do not take any of the previously described networks (`network_mode: "none"`), since it is necessary to create the wireless interfaces from a Linux kernel machine acting as host (the machine used to launch the lab):
+```yaml
+# Some examples inside docker-compose.yml
 ...
 # WLAN devices
   access-point-1:
@@ -355,9 +354,9 @@ Por otro lado, se aprecia cómo en todas las máquinas se define la opción `pri
     tty: true
 ...
 ```
-Esto se debe a que Docker tiene un límite al usar el kernel Linux anfitrión, de forma que no puede ejecutar comandos como `modprobe mac80211_hwsim` para la creación de interfaces inalámbricas virtuales. Debido a la necesidad de crear estas redes inalámbricas, surge el fichero [`launch.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/launch.sh), el cual se encarga de la creación de dichas interfaces así como de la adjudicación de estas a las máquinas Docker que las usarán:
-```
-# Porción del fichero launch.sh para lanzar las máquinas Docker y crear las interfaces inalámbricas
+This is because Docker has a limitation when using the host Linux kernel, so it cannot execute commands such as `modprobe mac80211_hwsim` to create virtual wireless interfaces. Due to the need to create these wireless networks, the [`launch.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/launch.sh) file appears, which is responsible for creating those interfaces and assigning them to the Docker machines that will use them:
+```bash
+# Snippet from launch.sh to launch Docker machines and create wireless interfaces
 ...
 docker-compose build
 docker-compose up -d
@@ -369,9 +368,9 @@ sleep 20
 modprobe mac80211_hwsim radios=5
 ...
 ```
-Además, no solo hace falta crear dichas interfaces, sino que se usan los namespaces de Linux con objeto de que cada una de las interfaces creadas sea usada por una única máquina dentro de la red inalámbrica:
-```
-# Porción de código launch.sh donde se manejan los namespaces
+In addition, not only do those interfaces need to be created, but Linux namespaces are also used so that each created interface is used by a single machine within the wireless network:
+```bash
+# Snippet from launch.sh where namespaces are handled
 ...
 # Associate each wireless interface to pid container network namespace
 ln -s /proc/"$AP_PID"/ns/net /var/run/netns/"$AP_PID"
@@ -386,8 +385,8 @@ iw phy "$WLAN3_PHY" set netns "$CLIENT3_PID"
 iw phy "$WLAN4_PHY" set netns "$ATTACKER_PID"
 ...
 ```
-De esta misma forma, se recomienda encarecidamente el uso del fichero [`stop.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/stop.sh), el cual se encarga de destruir la adjudicación de namespaces y las interfaces creadas:
-```
+In the same way, the use of the [`stop.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/stop.sh) file is strongly recommended, since it is responsible for destroying the namespace assignments and the created interfaces:
+```bash
 #!/bin/bash
 
 if [[ "$EUID" -ne 0 ]]; then
@@ -402,12 +401,11 @@ find -L /var/run/netns -type l -delete
 modprobe mac80211_hwsim -r
 docker-compose down
 ```
-Una vez analizados los ficheros que definen en rasgos más generales el laboratorio, es decir, los ficheros de configuración que levantan las máquinas, es hora de continuar viendo la configuración de cada uno de los dispositivos que componen las distintas redes.
+Once the files that define the lab in more general terms have been analyzed—that is, the configuration files that bring the machines up—it is time to continue examining the configuration of each of the devices that make up the different networks.
 
-
-### Red externa
-Aquí únicamente se visualiza una máquina Ubuntu que parte de la imagen "httpd" [[29](https://hub.docker.com/_/httpd)] proporcionada directamente por Apache con todo lo necesario para crear fácilmente un servidor Apache HTTP/HTTPS. Además de esto, cuenta con todos los ficheros de configuración ([`index.html`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/external/index_ext1.html) y [`ssl.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/external/ssl.conf)) para exponer un servicio HTTP y HTTPS que muestra un sencillo login (aunque este no es realmente funcional; solo sirve para mostrar cómo se puede clonar fácilmente). Por otro lado, contiene todo lo necesario (claves y [`client.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/external/client.conf), es decir, el fichero de configuración de OpenVPN para la conexión cliente) para establecer la conexión VPN con el servidor destinado para ello dentro de la red interna, así como un fichero de arranque ([`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/external/start.sh)) que simplemente ejecuta el servicio SSH en primer plano con objeto de poder conectarnos para realizar pruebas (esto se repetirá en todas las máquinas a excepción de `fw`, añadiendo algún pequeño detalle cuando sea necesario, como la ejecución de los servicios que implementa).
-```
+### External Network
+Here there is only a single Ubuntu machine based on the `httpd` image [[29](https://hub.docker.com/_/httpd)] provided directly by Apache, with everything needed to easily create an Apache HTTP/HTTPS server. In addition to that, it contains all the configuration files ([`index.html`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/external/index_ext1.html) and [`ssl.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/external/ssl.conf)) to expose an HTTP and HTTPS service showing a simple login page (although it is not actually functional; it only serves to show how a page can easily be cloned). On the other hand, it contains everything needed (keys and [`client.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/external/client.conf), that is, the OpenVPN client configuration file) to establish the VPN connection with the server intended for it inside the internal network, as well as a startup file ([`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/external/start.sh)) that simply runs the SSH service in the foreground so that connections can be made for testing (this will be repeated on all machines except `fw`, adding some small extra detail where necessary, such as launching the services they implement).
+```text
 📁 external
 ├── Dockerfile
 ├── ca.crt
@@ -419,10 +417,9 @@ Aquí únicamente se visualiza una máquina Ubuntu que parte de la imagen "httpd
 └── start.sh
 ```
 
-
-### Red DMZ
-Por otro lado, la red DMZ cuenta con dos dispositivos con una configuración similar, pero con pequeñas diferencias en las contramedidas que implementan. Por un lado se encuentra DMZ1, una máquina centrada en ofrecer una protección basada en el honeypot Cowrie. Mientras que la máquina DMZ2 busca ofrecer un nivel más alto de protección en la conexión mediante SSH, añadiendo características de *hardening*.
-```
+### DMZ Network
+On the other hand, the DMZ network contains two devices with similar configurations, but with small differences in the countermeasures they implement. On the one hand, there is DMZ1, a machine focused on offering protection based on the Cowrie honeypot. Meanwhile, DMZ2 aims to provide a higher level of protection for SSH connections by adding *hardening* features.
+```text
 📁 dmz
 ├── 📁 dmz1
 │   ├── Dockerfile
@@ -440,14 +437,12 @@ Por otro lado, la red DMZ cuenta con dos dispositivos con una configuración sim
     ├── ssl.conf
     ├── start.sh
     └── syslog.conf
-
 ```
-
 
 #### DMZ1
-Nuevamente se ve un `Dockerfile` que parte de la imagen "httpd" de Apache para generar el respectivo servidor HTTP/HTTPS con la ayuda de los ficheros [`ssl.conf`](http://github.com/Carlosdm06/TFG-Pentesting/blob/config/dmz/dmz1/ssl.conf) (conexión HTTPS) e [`index_dmz1.html`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz1/index_dmz1.html) (página principal). Por otro lado, destaca la configuración de Cowrie, la cual se realiza no mediante el [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz1/start.sh), sino por medio del propio [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz1/Dockerfile):
-```
-# Porción del Dockerfile que configura el Honeypot
+Once again, a `Dockerfile` can be seen that starts from Apache's `httpd` image to generate the corresponding HTTP/HTTPS server with the help of the [`ssl.conf`](http://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz1/ssl.conf) files (HTTPS connection) and [`index_dmz1.html`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz1/index_dmz1.html) (main page). On the other hand, the Cowrie configuration stands out, since it is carried out not through [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz1/start.sh), but through the [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz1/Dockerfile) itself:
+```dockerfile
+# Portion of the Dockerfile that configures the honeypot
 ...
 # Cowrie config
 #RUN adduser --disabled-password --gecos "" cowrie 
@@ -467,20 +462,19 @@ RUN cp /home/cowrie/cowrie/etc/userdb.example /home/cowrie/cowrie/etc/userdb.txt
     echo "carlos:x:1234" >> /home/cowrie/cowrie/etc/userdb.txt
 ...
 ```
-A diferencia del dispositivo anterior, este no solo expone SSH, sino que configura una regla `iptables` con el objetivo de redirigir el tráfico externo que intenta una conexión SSH (el puerto 22 es el puerto por defecto para SSH) hacia el puerto 2222, donde se expone el servidor Cowrie. De esta forma, se tiende una trampa a los usuarios externos mientras se permite un acceso SSH normal a los usuarios legítimos (red interna principalmente).
-```
+Unlike the previous device, this one not only exposes SSH, but also configures an `iptables` rule with the goal of redirecting external traffic that attempts an SSH connection (port 22 is the default SSH port) to port 2222, where the Cowrie server is exposed. In this way, a trap is laid for external users while normal SSH access is still allowed for legitimate users (mainly from the internal network).
+```bash
 iptables -t nat -A PREROUTING -s 10.5.0.0/24 -p tcp --dport 22 -j DNAT --to-destination :2222
 ```
 
-
 #### DMZ2
-Esta máquina cuenta con las mismas capacidades para exponer un servicio web HTTP/HTTPS con un pequeño mensaje que permita reconocer su procedencia (“¡Hola! Soy el servidor conocido como DMZ2”) gracias a los ficheros [`ssl.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz2/ssl.conf) (conexión HTTPS) e [`index_dmz2.html`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz2/index_dmz2.html) (página principal). En cambio, sustituye el uso de Cowrie como contramedida por la protección de SSH a través de un doble factor de autenticación ([`google_authenticator`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz2/google_authenticator)) combinado con la capacidad de bloquear el tráfico proveniente de direcciones IP que han realizado demasiados intentos fallidos (2 en este caso). Esto último es posible gracias al servicio *fail2ban* (configurado en [`jail.local`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz2/jail.local)) que trabaja en combinación con SSH, bloqueando las IP que realizan demasiados intentos mediante reglas `iptables`. 
+This machine has the same capabilities to expose an HTTP/HTTPS web service with a short message allowing its origin to be recognized (“Hello! I am the server known as DMZ2”) thanks to the [`ssl.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz2/ssl.conf) files (HTTPS connection) and [`index_dmz2.html`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz2/index_dmz2.html) (main page). However, it replaces Cowrie as a countermeasure with SSH protection through two-factor authentication ([`google_authenticator`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz2/google_authenticator)) combined with the ability to block traffic from IP addresses that have made too many failed attempts (2 in this case). This is possible thanks to the *fail2ban* service (configured in [`jail.local`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz2/jail.local)), which works together with SSH by blocking IPs that make too many attempts through `iptables` rules.
 
-Además, son necesarios el fichero [`syslog.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz2/syslog.conf) para indicarle al servicio *syslog* que debe registrar los intentos fallidos de conexión a SSH, así como el fichero [`sshd_config`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz2/sshd_config) para cambiar la configuración de SSH, permitiendo así la adición de todas estas funcionalidades, además de cambiar el puerto en el que trabaja SSH al 2222 para que los atacantes no puedan reconocerlo directamente (por defecto es el 22). Por otro lado, se establece el directorio [`.ssh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/config/dmz/dmz2/.ssh), el cual almacena las claves necesarias para permitir una autenticación mediante clave pública/privada al servicio SSH. También se ha optado por dar un toque más de detalle al servidor DMZ2 gracias a la personalización del *banner* ([`banner.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/dmz/dmz2/banner.sh)) mostrado al autenticarse en SSH.
+In addition, the [`syslog.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz2/syslog.conf) file is necessary to tell the *syslog* service that it must register failed SSH connection attempts, as well as the [`sshd_config`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz2/sshd_config) file to change the SSH configuration, thus allowing the addition of all these features, in addition to moving SSH to port 2222 so that attackers cannot identify it directly (the default is 22). On the other hand, the [`.ssh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/config/dmz/dmz2/.ssh) directory is set up to store the keys required for public/private key authentication to the SSH service. It was also decided to add a little more detail to the DMZ2 server by customizing the *banner* ([`banner.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/dmz/dmz2/banner.sh)) displayed after authenticating over SSH.
 
-### Red interna (cableada)
-En esta red se implementan dos máquinas Ubuntu sencillas que actúan como usuarios normales de la red interna con capacidad de acceso a los servidores para su administración, junto a otra máquina de características similares que además ofrecerá un servidor VPN a través de OpenVPN. Además, se instala una máquina con la vulnerabilidad ShellShock, así como un punto de acceso inalámbrico que estará conectado a la red interna de forma cableada para hacer que la red inalámbrica que crea forme parte de la red interna.
-```
+### Internal Network (Wired)
+This network implements two simple Ubuntu machines acting as normal users of the internal network with the ability to access the servers for administration, together with another machine with similar characteristics that also provides a VPN server through OpenVPN. In addition, a machine with the ShellShock vulnerability is installed, as well as a wireless access point that is connected to the internal network by cable so that the wireless network it creates becomes part of the internal network.
+```text
 📁 internal
 ├── 📁 int12
 │   ├── 📁 .ssh
@@ -500,24 +494,22 @@ En esta red se implementan dos máquinas Ubuntu sencillas que actúan como usuar
 └── 📁 wireless
 ```
 
-
 #### int12
-Las máquinas int1 e int2 son dos máquinas idénticas que implementan una sencilla máquina Ubuntu 24.04 a la que únicamente se le añade un servicio SSH para mantenerlas activas y permitir la conexión por motivos de administración y pruebas del laboratorio. Esto se ve reflejado entre el fichero [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/int12/Dockerfile) y el script de arranque [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/int12/start.sh). Además, contienen un directorio [`.ssh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/int12/.ssh) que permite la autenticación vía clave pública/privada en el servicio SSH del servidor DMZ2 (contraseña para usar la clave privada = "1234"). Finalmente, se puede apreciar en el fichero de arranque una entrada añadida a la tabla de enrutamiento:
-```
-# Porción de start.sh
+The int1 and int2 machines are two identical machines implementing a simple Ubuntu 24.04 machine to which only an SSH service is added so that they remain running and can be connected to for administration and lab testing purposes. This can be seen in the [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/int12/Dockerfile) and the startup script [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/int12/start.sh). In addition, they contain a [`.ssh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/int12/.ssh) directory that allows public/private key authentication to the DMZ2 server's SSH service (password for using the private key = `1234`). Finally, an entry added to the routing table can be seen in the startup file:
+```bash
+# Portion of start.sh
 ...
 # Allow connections with WLAN
 ip route add 10.5.2.128/26 via 10.5.2.24
 ...
 ```
 
-
-Esta entrada se usa para que la red interna sea capaz de ubicar la subred inalámbrica dentro de esta red (a través del punto de acceso) y pueda comunicarse con ella fácilmente, siendo esto un comportamiento que se repite en el resto de máquinas cableadas de la red interna (excepto en el punto de acceso, que ya está directamente conectado a esta subred).
+This entry is used so that the internal network can locate the wireless subnet within this network (through the access point) and communicate with it easily. This behavior is repeated in the rest of the wired machines of the internal network (except for the access point, which is already directly connected to that subnet).
 
 #### int3
-Contiene las mismas características que las dos máquinas anteriores a excepción de las claves SSH para la conexión con DMZ2 (aunque puede conectarse igualmente con usuario y clave). De esta forma, el fichero [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/int3/Dockerfile) tiene una configuración muy similar, añadiendo la copia dentro de la imagen que se creará, de los ficheros relacionados con claves del servicio OpenVPN que expone en el puerto 1194, así como el fichero de configuración [`server.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/int3/server.conf) para este mismo servicio, donde se definen las características del servidor VPN. Además, en [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/int3/start.sh) se aprecia, a mayores que en las máquinas int1 e int2, una serie de reglas `iptables` que permiten la conexión VPN:
-```
-# Porción de start.sh
+It has the same characteristics as the previous two machines except for the SSH keys to connect to DMZ2 (although it can still connect using username and password). Thus, the [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/int3/Dockerfile) has a very similar configuration, adding into the image to be created the files related to the keys of the OpenVPN service it exposes on port 1194, as well as the [`server.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/int3/server.conf) configuration file for that same service, where the characteristics of the VPN server are defined. In addition, in [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/int3/start.sh) there can be seen, beyond what is present on int1 and int2, a set of `iptables` rules that allow the VPN connection:
+```bash
+# Portion of start.sh
 ...
 # Allow connections with WLAN
 ip route add 10.5.2.128/26 via 10.5.2.24
@@ -530,22 +522,21 @@ iptables -A FORWARD -s 10.8.0.0/24 -j ACCEPT
 ...
 ```
 
-Más concretamente, se permite el tráfico que atraviesa esta máquina (desactivado por defecto) para que pueda ser redirigido a la red interna, donde la subred `10.8.0.0/24` representa una red creada por el servidor VPN para enmascarar las IP de origen reales de los clientes que se conectan (especificado en [`server.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/int3/server.conf)). De esta forma, el tráfico proveniente de esa subred es redirigido a través de la máquina int3 hacia la red interna (sale por la interfaz `eth0` de int3), siendo enmascarado con la IP de origen de esta máquina.
+More specifically, traffic passing through this machine (disabled by default) is allowed so that it can be redirected to the internal network, where the subnet `10.8.0.0/24` represents a network created by the VPN server to mask the real source IPs of connecting clients (specified in [`server.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/int3/server.conf)). In this way, traffic coming from that subnet is redirected through int3 to the internal network (leaving through int3's `eth0` interface), being masked with this machine's source IP.
 
 #### int4
-Esta máquina representa un dispositivo vulnerable que parte de la imagen "vulnerables/cve-2014-6271" [[30](https://hub.docker.com/r/vulnerables/cve-2014-6271)], como se ve en su fichero [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/int4/Dockerfile). De esta forma, se crea una máquina que realmente es Ubuntu, pero simula una vulnerabilidad típica de Windows, lo cual nos permite añadir el servicio SSH típico de todas las máquinas del laboratorio, junto a la modificación de la tabla de enrutamiento para permitir el acceso a la subred inalámbrica ([`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/int4/start.sh)):
-```
-# Porción de start.sh
+This machine represents a vulnerable device based on the `vulnerables/cve-2014-6271` image [[30](https://hub.docker.com/r/vulnerables/cve-2014-6271)], as can be seen in its [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/int4/Dockerfile). In this way, a machine is created that is actually Ubuntu, but simulates a vulnerability that is typical of Windows, which allows the addition of the SSH service common to all the machines in the lab, together with a routing table modification to allow access to the wireless subnet ([`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/int4/start.sh)):
+```bash
+# Portion of start.sh
 ...
 # Allow connections with WLAN
 ip route add 10.5.2.128/26 via 10.5.2.24
 ...
 ```
 
-
-### Red interna (inalámbrica)
-Además de las máquinas cableadas, en la red interna se crea una subred `10.5.2.128/26` de máquinas inalámbricas, donde el punto de acceso con IP `10.5.2.129` es quien administra esta comunicación y permite la conexión a través de la red interna con el resto de máquinas (tiene las mismas restricciones que las máquinas cableadas, ya que la comunicación pasará por `fw` una vez atraviese el punto de acceso). Igualmente que en la parte cableada, se repite una estructura con dos máquinas Ubuntu 24.04 sencillas acompañadas de una máquina vulnerable, añadiendo como extra una máquina atacante basada en Kali Linux, con la idea de ser la máquina principalmente usada en la ejecución de los distintos ataques que se estudiarán.
-```
+### Internal Network (Wireless)
+In addition to the wired machines, the internal network includes a `10.5.2.128/26` subnet of wireless machines, where the access point with IP `10.5.2.129` is the device that manages this communication and allows connection through the internal network with the rest of the machines (it has the same restrictions as the wired machines, since communication will pass through `fw` once it traverses the access point). Just as in the wired part, the same structure is repeated with two simple Ubuntu 24.04 machines together with a vulnerable machine, with the addition of an attacker machine based on Kali Linux, intended to be the machine mainly used to carry out the various attacks studied.
+```text
 📁 wireless
 ├── 📁 AP
 │   ├── Dockerfile
@@ -584,27 +575,27 @@ Además de las máquinas cableadas, en la red interna se crea una subred `10.5.2
     └── wpa_supplicant.conf
 ```
 
-Aquí se presentan una serie de ficheros comunes entre las distintas máquinas, empezando por los ficheros [`wpa_supplicant.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/client3/wpa_supplicant.conf), [`wpa_supplicant_wlan1.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/client12/wpa_supplicant_wlan1.conf) y [`wpa_supplicant_wlan2.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/client12/wpa_supplicant_wlan2.conf), los cuales son muy similares independientemente de la máquina en la que se encuentren, permitiendo establecer la conexión Wi-Fi con el punto de acceso a los distintos clientes (también se incluye en el atacante para facilitar la conexión una vez se obtiene la clave). Estos ficheros pueden sufrir cambios en función de la rama en la que estén, variando según los protocolos de seguridad simulados en cada una de estas, ya que especifican las credenciales de autenticación en el punto de acceso. 
+Here there are several files common to the different machines, starting with [`wpa_supplicant.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/client3/wpa_supplicant.conf), [`wpa_supplicant_wlan1.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/client12/wpa_supplicant_wlan1.conf), and [`wpa_supplicant_wlan2.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/client12/wpa_supplicant_wlan2.conf), which are very similar regardless of the machine in which they are found, making it possible for the various clients to connect to the access point (they are also included on the attacker to facilitate connection once the key is obtained). These files may change depending on the branch they are in, varying according to the security protocols simulated in each of them, since they specify the authentication credentials for the access point.
 
-Otro archivo similar en todos los clientes es [`wpa_supplicant-config.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/client3/wpa_supplicant.conf), el cual configura el servicio *wpa_supplicant* para permitir todo tipo de configuraciones, incluyendo WEP, gracias a la descarga y compilación de esta herramienta que se aprecia en cualquiera de sus [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/client12/Dockerfile). Además, estas máquinas contienen un fichero de arranque [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/client3/start.sh) donde se ejecutan los servicios necesarios para conectarse al punto de acceso (excepto en el atacante, el cual tiene las herramientas, pero por definición no debería conocer los detalles de la conexión):
-```
-# Porción de start.sh
+Another similar file on all clients is [`wpa_supplicant-config.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/client3/wpa_supplicant.conf), which configures the *wpa_supplicant* service to allow all kinds of configurations, including WEP, thanks to the download and compilation of this tool, as can be seen in any of their [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/client12/Dockerfile) files. In addition, these machines contain a startup file [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/client3/start.sh) where the services needed to connect to the access point are executed (except on the attacker, which has the tools, but by definition should not know the connection details):
+```bash
+# Portion of start.sh
 ...
 wpa_supplicant -i "$IFACE" -c wpa_supplicant.conf -B
 sleep 2
 dhclient "$IFACE"
 ...
 ```
-En este fichero también se aprecia cómo los clientes WLAN registran el dominio `carlos.web.com` asociado a la IP `10.5.0.20`, es decir, asocian este dominio al servicio expuesto por la máquina externa (web con proceso de login ficticio). Sin embargo, esto se deja comentado en el fichero destino (`/etc/hosts`), ya que solo será una contramedida que se deja disponible para activar después de ver los efectos adversos de un ataque:
-```
+This file also shows how WLAN clients register the domain `carlos.web.com` associated with IP `10.5.0.20`; that is, they associate this domain with the service exposed by the external machine (a website with a fake login process). However, this is left commented out in the destination file (`/etc/hosts`), since it is only a countermeasure left available to be activated after seeing the adverse effects of an attack:
+```bash
 echo "10.5.0.20      carlos.web.com" >> /etc/hosts
 ```
 
-Además, se visualizan dos archivos `.txt`, [`ssh_passwords.txt`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/attacker/ssh_passwords.txt) y [`ssh_usernames.txt`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/attacker/ssh_usernames.txt), los cuales son respectivamente diccionarios de contraseñas y nombres de usuarios que serán usados para realizar ataques de fuerza bruta que prueben todas las combinaciones de estos con objeto de romper las credenciales de un servidor SSH. 
+In addition, two `.txt` files are shown, [`ssh_passwords.txt`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/attacker/ssh_passwords.txt) and [`ssh_usernames.txt`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/attacker/ssh_usernames.txt), which are respectively dictionaries of passwords and usernames that will be used to perform brute-force attacks trying all possible combinations to break the credentials of an SSH server.
 
 #### AP
-Máquina que parte de la imagen `freeradius/freeradius-server:3.2.7` [[31](https://hub.docker.com/layers/freeradius/freeradius-server/3.2.7/images/sha256-42b05de4405b1e745686b9ed0f70307fd43e998b850b3e6bd936733a8c260595)], el cual es un Ubuntu 22.04 preparado para ofrecer un servidor RADIUS de FreeRADIUS. Esto se debe a que se muestra la configuración de la rama [`WPA/WPA2-RADIUS`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-RADIUS), al ser la más completa de todas; sin embargo, en el resto de ramas se parte de una imagen `debian:bookworm-slim`, permitiendo en ambos casos una configuración similar en la cual se instala y compila la herramienta *hostapd*, lo cual se puede apreciar en los respectivos [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/AP/Dockerfile). Por otro lado, también se aprecia la exposición del servicio SSH para administración típico de todas las máquinas, al cual se le añaden una serie de reglas `iptables` en [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/AP/start.sh) con el objeto de poder realizar la función de punto de acceso que redirige las comunicaciones que salen de la red inalámbrica hacia la red cableada y viceversa. 
-```
+This machine starts from the `freeradius/freeradius-server:3.2.7` image [[31](https://hub.docker.com/layers/freeradius/freeradius-server/3.2.7/images/sha256-42b05de4405b1e745686b9ed0f70307fd43e998b850b3e6bd936733a8c260595)], which is an Ubuntu 22.04 image prepared to provide a FreeRADIUS RADIUS server. This is because the configuration shown corresponds to the [`WPA/WPA2-RADIUS`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-RADIUS) branch, as it is the most complete of all; however, in the rest of the branches the base image is `debian:bookworm-slim`, allowing in both cases a similar configuration in which the *hostapd* tool is installed and compiled, as can be seen in the corresponding [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/AP/Dockerfile) files. On the other hand, the exposure of the SSH service for administration—common to all machines—can also be seen, to which a set of `iptables` rules are added in [`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/AP/start.sh) so that it can perform the access point function that redirects communications leaving the wireless network toward the wired network and vice versa.
+```bash
 # Allow forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
@@ -624,8 +615,8 @@ iptables -A INPUT -i lo -j ACCEPT
 iptables -A OUTPUT -o lo -j ACCEPT
 ```
 
-También se aprecia cómo permite la comunicación WLAN entre máquinas inalámbricas y el tráfico interno (*loopback*). Además, se puede ver cómo inicia los servicios relacionados con su función de punto de acceso:
-```
+It can also be seen how it allows WLAN communication between wireless machines and internal (*loopback*) traffic. In addition, it can be seen how it starts the services related to its role as an access point:
+```bash
 # Setup DHCP
 touch /var/lib/dhcp/dhcpd.leases
 chown root:root /var/lib/dhcp/dhcpd.leases
@@ -637,23 +628,23 @@ sleep 2
 hostapd /ap/hostapd.conf -B
 ```
 
-En cuanto a los ficheros de configuración, hay que destacar aquellos comunes a todas las versiones de las ramas, como [`hostapd.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/AP/hostapd.conf) y [`hostapd-config.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/AP/hostapd-config.conf), los cuales resultan similares a sus homónimos de *wpa_supplicant*, siendo la configuración del punto de acceso que creará *hostapd* y la configuración de compilación de esta herramienta para permitir todas las opciones (principalmente porque WEP viene desactivado por defecto), respectivamente. También es común a todas las ramas el fichero [`dhcp.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/AP/dhcp.conf), el cual define el servicio DHCP que proporciona las IP a los clientes que se conectan.
+As for the configuration files, those common to all branch versions should be highlighted, such as [`hostapd.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/AP/hostapd.conf) and [`hostapd-config.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/AP/hostapd-config.conf), which are similar to their *wpa_supplicant* counterparts, being the configuration of the access point to be created by *hostapd* and the compilation configuration of this tool to enable all options (mainly because WEP is disabled by default), respectively. The [`dhcp.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/AP/dhcp.conf) file is also common to all branches; it defines the DHCP service that provides IP addresses to connecting clients.
 
-Por otro lado, ficheros como [`clients.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/AP/clients.conf), [`eap`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/AP/eap) y [`users`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/AP/users) son parte de la configuración de WPA/WPA2-Enterprise exclusiva de la rama [`WPA/WPA2-RADIUS`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-RADIUS); estos ficheros conforman la configuración del servicio FreeRADIUS. Definen los usuarios (se usa PEAP), así como la configuración del servidor ofrecido.
+On the other hand, files such as [`clients.conf`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/AP/clients.conf), [`eap`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/AP/eap), and [`users`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/AP/users) are part of the WPA/WPA2-Enterprise configuration exclusive to the [`WPA/WPA2-RADIUS`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-RADIUS) branch; these files make up the configuration of the FreeRADIUS service. They define the users (PEAP is used), as well as the configuration of the provided server.
 
 #### client12
-Nuevamente se presenta una configuración común a dos máquinas sencillas (client1 y client2) que parten de la imagen `debian:bookworm-slim` y que únicamente implementan el servicio SSH para seguir arrancadas una vez se inician con Docker ([`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/internal/wireless/client12/Dockerfile)) y poder conectarnos a ellas para labores administrativas. Introducen únicamente todo aquello relacionado con la conexión a la red Wi-Fi mediante *wpa_supplicant*, lo cual es común al resto de máquinas, como ya se comentó.
+Once again, a configuration common to two simple machines (client1 and client2) is presented, both based on the `debian:bookworm-slim` image and implementing only the SSH service in order to remain running once started with Docker ([`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/internal/wireless/client12/Dockerfile)) and allow administrative connections to them. They only introduce what is related to connecting to the Wi-Fi network through *wpa_supplicant*, which is common to the rest of the machines, as already explained.
 
 #### client3
-También se muestra otra máquina sencilla que utiliza la comunicación SSH y todo lo necesario para conectarse al punto de acceso mediante *wpa_supplicant*. En cambio, esta máquina parte de la imagen `kirscht/metasploitable3-ub1404` [[32](https://hub.docker.com/r/kirscht/metasploitable3-ub1404)], que implementa una máquina vulnerable Metasploitable3 [[26](https://www.rapid7.com/blog/post/2016/11/15/test-your-might-with-the-shiny-new-metasploitable3/)] que parte de Ubuntu 14.04 (permite una configuración similar a las máquinas client1 y client2) para crear servicios vulnerables.
+Another simple machine is also shown that uses SSH communication and everything necessary to connect to the access point through *wpa_supplicant*. However, this machine is based on the `kirscht/metasploitable3-ub1404` image [[32](https://hub.docker.com/r/kirscht/metasploitable3-ub1404)], which implements a vulnerable Metasploitable3 machine [[26](https://www.rapid7.com/blog/post/2016/11/15/test-your-might-with-the-shiny-new-metasploitable3/)] based on Ubuntu 14.04 (allowing a configuration similar to client1 and client2) in order to create vulnerable services.
 
 #### attacker
-La máquina atacante es la más importante de todas, al ser la principalmente manejada a la hora de realizar los distintos ataques estudiados. Parte de una máquina Kali Linux *Rolling* e implementa las herramientas de Kali para realizar pruebas de seguridad de red (`kali-tools-wireless`), así como la configuración común de *wpa_supplicant* para poder establecer comunicación con el punto de acceso en caso de ser necesario (aunque por defecto no se conecta para que los ataques tengan sentido). También cuenta, exclusivamente en esta rama (basada en la rama [`WPA/WPA2-RADIUS`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-RADIUS)), con todo lo necesario para establecer un servidor FreeRADIUS, necesario para conseguir acceso ilegítimo en el punto de acceso que usa esta misma tecnología.
+The attacker machine is the most important of all, since it is the one mainly handled when carrying out the various studied attacks. It starts from a Kali Linux *Rolling* machine and implements Kali tools for network security testing (`kali-tools-wireless`), as well as the common *wpa_supplicant* configuration needed to establish communication with the access point if necessary (although by default it does not connect so that the attacks make sense). It also includes, exclusively in this branch (based on the [`WPA/WPA2-RADIUS`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-RADIUS) branch), everything required to establish a FreeRADIUS server, necessary to gain illegitimate access to the access point using that same technology.
 
-### Máquina `fw` (en todas las redes)
-Otra máquina que cobra mucha importancia es la que representa el *firewall*, la cual es el punto intermedio que une todas las redes. Esta máquina tiene una configuración básica de Ubuntu 24.04 donde se expone el mismo servicio SSH que en el resto del laboratorio ([`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/fw/Dockerfile)). Sin embargo, implementa una serie de reglas `iptables` que hacen posible su misión como cortafuegos ([`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/config/fw/start.sh)):
-```
-# Porción de start.sh relativa a las reglas firewall
+### `fw` Machine (in All Networks)
+Another machine of great importance is the one representing the *firewall*, which acts as the intermediate point joining all the networks. This machine has a basic Ubuntu 24.04 configuration exposing the same SSH service as the rest of the lab ([`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/fw/Dockerfile)). However, it implements a series of `iptables` rules that make its firewall mission possible ([`start.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/config/fw/start.sh)):
+```bash
+# Portion of start.sh related to firewall rules
 ...
 # Allow forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
@@ -711,4 +702,4 @@ iptables -A FORWARD -s 10.5.0.0/24 -d 10.5.1.20 -p tcp --dport 22 -j ACCEPT
 ...
 ```
 
-[`Volver a la introducción`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/main)
+[`Back to the introduction`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/main)
