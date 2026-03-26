@@ -1,0 +1,197 @@
+# version: '3.8'                    # Not necessary
+
+services:
+# Firewall device
+  fw: 
+    image: bin/fw 
+    build: ./fw
+    container_name: fw
+    networks: 
+      external-network:
+        ipv4_address: 10.5.0.1 
+      DMZ:
+        ipv4_address: 10.5.1.1
+      internal-network:
+        ipv4_address: 10.5.2.1
+    privileged: true 
+    tty: true
+
+# External device
+  external:
+    image: bin/external
+    build: ./external
+    container_name: ext1
+    networks:
+      external-network:
+        ipv4_address: 10.5.0.20 
+    depends_on:
+      - fw
+    privileged: true
+    tty: true
+
+# Servers (DMZ) devices
+  dmz-1:
+    image: bin/dmz-1
+    build: ./dmz/dmz1
+    container_name: dmz1
+    networks:
+      DMZ:
+        ipv4_address: 10.5.1.20
+    depends_on:
+      - fw
+    privileged: true
+    tty: true
+
+  dmz-2:
+    image: bin/dmz-2
+    build: ./dmz/dmz2
+    container_name: dmz2
+    networks:
+      DMZ:
+        ipv4_address: 10.5.1.21
+    depends_on:
+      - fw
+    privileged: true
+    tty: true
+
+# LAN devices
+  internal-1:
+    image: bin/internal-12
+    build: ./internal/int12
+    container_name: inet1
+    networks:
+      internal-network:
+        ipv4_address: 10.5.2.20
+    depends_on:
+      - fw
+    privileged: true
+    tty: true
+
+  internal-2:
+    image: bin/internal-12
+    build: ./internal/int12
+    container_name: inet2
+    networks:
+      internal-network:
+        ipv4_address: 10.5.2.21
+    depends_on:
+      - fw
+    privileged: true
+    tty: true
+
+  internal-3:
+    image: bin/internal-3
+    build: ./internal/int3
+    container_name: inet3
+    networks:
+      internal-network:
+        ipv4_address: 10.5.2.22
+    depends_on:
+      - fw
+    privileged: true
+    tty: true
+
+  # EternalBlue vulnerable device
+  internal-4:
+    image: bin/internal-4
+    build: ./internal/int4
+    container_name: inet4
+    networks:
+      internal-network:
+        ipv4_address: 10.5.2.23
+    depends_on:
+      - fw
+    privileged: true
+    tty: true
+
+  # WLAN devices
+  access-point-1:
+    image: bin/access-point
+    build: ./internal/wireless/AP
+    container_name: ap
+    networks:
+      internal-network:
+        ipv4_address: 10.5.2.24
+    depends_on:
+      - fw
+    privileged: true
+    tty: true
+
+  client-1:
+    image: bin/client
+    build: ./internal/wireless/client12
+    container_name: client1
+    network_mode: "none"
+    depends_on:
+      - access-point-1
+    privileged: true
+    tty: true
+  
+  client-2:
+    image: bin/client
+    build: ./internal/wireless/client12
+    container_name: client2
+    network_mode: "none"
+    depends_on:
+      - access-point-1
+    privileged: true
+    tty: true
+
+  # Vulnerable device (metasploitable 3)
+  client-3:
+    image: bin/client3
+    build: ./internal/wireless/client3
+    container_name: client3
+    network_mode: "none"                    
+    depends_on:
+      - access-point-1
+    entrypoint: /entrypoint.sh                    # use environment variables to set password, enable root and start services
+    environment:
+      PASS: pass1234
+      ROOT: yes
+      CUPS: yes
+      FTP: yes
+      HTTP: yes
+      IRC: yes
+      SMB: yes
+      SSH: yes
+      SQL: yes
+    privileged: true
+    tty: true
+
+  attacker-1:
+    image: bin/attacker
+    build: ./internal/wireless/attacker
+    container_name: attacker1
+    network_mode: "none"
+    depends_on:
+      - access-point-1
+    privileged: true
+    tty: true
+
+# Define networks (except wlan, this is define between hostapd and launch script)
+networks:  
+  external-network: 
+    driver: bridge 
+    ipam:
+      config:
+        - subnet: 10.5.0.0/24 
+          gateway: 10.5.0.254 
+
+  DMZ:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.1.0/24
+          gateway: 10.5.1.254
+
+  internal-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.2.0/24
+          gateway: 10.5.2.254
+          
+          
+          
+  
