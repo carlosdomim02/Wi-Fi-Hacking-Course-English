@@ -1,72 +1,72 @@
 # WPS Cracking Lab
-## Introducción
-En este bloque se busca atacar una tecnología implementada para facilitar la conexión a los clientes WPS, la cual se suele usar en combinación con otros protocolos de seguridad como WPA, WPA2 o WPA3. Para ello, se sigue la misma metodología que en los ataques previos, viendo todos los detalles del protocolo, así como vulnerabilidades y contramedidas a los ataques ejecutados.
 
-## Protocolo WPS
-WPS fue introducido en 2006 como una capa adicional de configuración de los protocolos WPA/WPA2 PSK que facilita la conexión a los usuarios. Este tipo de configuración evita a dichos usuarios la introducción de la contraseña (PSK), permitiendo otras alternativas para el proceso de autenticación: [[39](https://ro.ecu.edu.au/ecuworks2012/146/)]
-- PIN de 8 dígitos
-- Pulsar un botón específico del punto de acceso
-- Uso de tecnología NFC
+## Introduction
+This section aims to attack a technology implemented to make it easier for WPS clients to connect, which is often used in combination with other security protocols such as WPA, WPA2, or WPA3. To do so, the same methodology as in the previous attacks is followed, covering all the protocol details, as well as vulnerabilities and countermeasures against the executed attacks.
 
-### Vulnerabilidades
-En el caso de usar los botones o NFC, la exposición del dispositivo al público puede suponer un grave problema de seguridad, ya que solo basta con tener acceso físico a dicho punto de acceso para poder conectarnos a la red como usuarios legítimos. Por otro lado, las opciones relacionadas con un PIN de corta longitud (8 dígitos) da paso a ataques de fuerza bruta. Donde destacan los ejecutados con herramientas como Reaver [[38](https://www.kali.org/tools/reaver/)], la cual simplemente requiere de tener Python instalado. [[39](https://ro.ecu.edu.au/ecuworks2012/146/)]
+## WPS Protocol
+WPS was introduced in 2006 as an additional configuration layer for WPA/WPA2 PSK protocols that makes it easier for users to connect. This type of configuration prevents users from having to enter the password (PSK), allowing other alternatives for the authentication process: [[39](https://ro.ecu.edu.au/ecuworks2012/146/)]
+- 8-digit PIN
+- Pressing a specific button on the access point
+- Use of NFC technology
 
-## Atacando WPS
-Una vez nos encontramos en la rama respectiva a la versión WPS de la seguridad del punto de acceso, se debe lanzar el laboratorio y establecer conexión con la máquina Kali de igual forma que se hace en los capítulos previos:
-```
+### Vulnerabilities
+In the case of using buttons or NFC, exposing the device to the public can pose a serious security issue, since physical access to the access point is enough to connect to the network as a legitimate user. On the other hand, the options related to a short PIN (8 digits) open the door to brute-force attacks. Among these, attacks carried out with tools such as Reaver stand out [[38](https://www.kali.org/tools/reaver/)], which simply requires Python to be installed. [[39](https://ro.ecu.edu.au/ecuworks2012/146/)]
+
+## Attacking WPS
+Once located in the branch corresponding to the WPS version of access point security, the lab must be launched and a connection established to the Kali machine in the same way as in the previous chapters:
+```bash
 sudo ./launch.sh
 docker-compose exec attacker-1 bash 
 ```
-Una vez dentro se procede nuevamente a activar el modo monitor en la interfaz inalámbrica del atacante (wlan4) con objeto de capturar paquetes que no van dirigidos a esta máquina. Esto se realiza en un primer instante con objeto de visualizar aquellos puntos de acceso que activan WPS, así como otros detalles como podría ser la versión de este protocolo:
-```
+Once inside, the attacker’s wireless interface (wlan4) is again switched to monitor mode in order to capture packets that are not addressed to this machine. This is initially done in order to view which access points have WPS enabled, as well as other details such as the version of this protocol:
+```bash
 airmon-ng start wlan4
 ```
-`Recordatorio:` Esto puede generar una interfaz en modo monitor con igual nombre o alguno similar a `wlan4mon`, también revisar con `ifconfig` que la interfaz de la máquina atacante sea `wlan4`.
+`Reminder:` This may create a monitor-mode interface with the same name or one similar to `wlan4mon`; it is also advisable to check with `ifconfig` that the attacker machine’s interface is `wlan4`.
 
-Con el modo monitor activo, ya se puede lanzar `airodump-ng` con el objetivo de visualizar aquellos dispositivos que activan WPS (usar opciones como `-c` para filtrar los resultados si se ve necesario):
-```
+With monitor mode active, `airodump-ng` can now be launched to view devices that have WPS enabled (using options such as `-c` to filter the results if needed):
+```bash
 airodump-ng --wps wlan4mon
 ```
 <img width="927" height="179" alt="image" src="https://github.com/user-attachments/assets/59105bc4-089b-4929-8996-2b77aa0211be" />
 
-Tras esto se visualiza que nuestro objetivo, la red con SSID `WPSnetwork`, está usando el protocolo WPS (posiblemente con PIN). Para verificar esta información también se puede usar la herramienta `wash`, la cual forma parte del paquete reaver que se usará para manifestar el ataque de fuerza bruta final:
-```
+After this, it can be seen that our target, the network with SSID `WPSnetwork`, is using the WPS protocol (possibly with PIN). To verify this information, the `wash` tool can also be used, which is part of the Reaver package that will be used to demonstrate the final brute-force attack:
+```bash
 wash -i wlan4mon
 ```
 <img width="813" height="145" alt="image" src="https://github.com/user-attachments/assets/5726d5b3-5a32-4402-87d1-6d856382d4d5" />
 
-`Nota:` También es necesario que la interfaz esté en modo monitor para esta herramienta, ya que necesita la capacidad de escuchar comunicaciones ajenas.
+`Note:` The interface must also be in monitor mode for this tool, since it needs the ability to listen to third-party communications.
 
-Una vez se confirma que la red `WPSnetwork` usa WPS, se puede proceder a usar la herramienta Reaver para lanzar el ataque de fuerza bruta que prueba todas las opciones del PIN de 8 dígitos que posiblemente tenga activo WPS. Aunque aún no sabemos a ciencia cierta que se esté usando este método, Reaver es capaz de detectar si se usa o no cuando se lanza el ataque:
-```
+Once it has been confirmed that the `WPSnetwork` network uses WPS, the Reaver tool can be used to launch the brute-force attack that tries all possible 8-digit PIN values that WPS may have enabled. Although we still do not know for certain whether this method is being used, Reaver is able to detect whether it is or not when the attack is launched:
+```bash
 reaver -c 6 -b 02:00:00:00:00:00 -i wlan4mon -vv
 ```
-* `-c 6`: canal en el que trabaja el punto de acceso. 
-* `-b 02:00:00:00:00:00`: dirección MAC del punto de acceso.
-* `-i wlan4mon`: nombre de la interfaz del atacante.
-* `-vv`: modo verbose extendido que detalla en mayor medida lo que está sucediendo mientras se realiza el ataque.
+* `-c 6`: channel on which the access point is operating. 
+* `-b 02:00:00:00:00:00`: MAC address of the access point.
+* `-i wlan4mon`: name of the attacker’s interface.
+* `-vv`: extended verbose mode, which provides more detailed output about what is happening during the attack.
 
-**Máquina del atacante:**
+**Attacker machine:**
 <img width="878" height="841" alt="image" src="https://github.com/user-attachments/assets/e69fc29a-642a-4597-ad8c-39d7bb1d28d3" />
 <img width="652" height="840" alt="image" src="https://github.com/user-attachments/assets/90e3fe4a-d588-4d3d-a0ab-dc2829f815e7" />
 <img width="642" height="847" alt="image" src="https://github.com/user-attachments/assets/eb34bfaf-2abe-4c9e-89bc-72df469f6a0d" />
 <img width="619" height="815" alt="image" src="https://github.com/user-attachments/assets/28483732-614a-443e-8962-cca2f16e9e69" />
 
-**Punto de acceso (se aprecia como no hay nada referente a `02:00:00:00:04:00`, la MAC del atacante):**
+**Access point (it can be seen that there is nothing referring to `02:00:00:00:04:00`, the attacker’s MAC):**
 <img width="1257" height="302" alt="image" src="https://github.com/user-attachments/assets/a2d19383-db49-4a51-af68-e45ccd596dbc" />
 
-
-Sin embargo, tras ejecutar el ataque vemos como algo falla, parece que el punto de acceso no es capaz de detectar correctamente los mensajes necesarios con los que debe contestar el punto de acceso tras lanzar reaver para poder ejecutar el ataque. Esto se debe a que la virtualización de las tarjetas de red inalámbricas mediante el módulo `mac80211_hwsim` no ofrecen una implementación completamente fiel a las tarjetas inalámbricas reales. De esta forma algunos mensajes como los EAPOL (transporte de mensajes mediante redes LAN) o M1-M8 (comunicación de autenticación entre host y AP) que usa reaver para realizar los ataques no son soportados por la virtualización, haciendo que este ataque no sea viable por este medio. Sin embargo, se mostrará un ejemplo un punto de acceso real y una tarjeta WiFi USB (típico para realizar ataques WiFi desde un terminal Kali Linux). En concreto, el punto de acceso es un [`TP-LINK AC1200`](https://www.tp-link.com/es/home-networking/wifi-router/archer-c1200/):
+However, after running the attack, something appears to fail: the access point does not seem able to correctly detect the necessary messages it must respond to after Reaver is launched in order to carry out the attack. This is because virtualization of wireless network cards through the `mac80211_hwsim` module does not provide an entirely faithful implementation of real wireless cards. As a result, some messages such as EAPOL (transport of messages over LAN networks) or M1-M8 (authentication communication between host and AP), which Reaver uses to perform its attacks, are not supported by the virtualization, making this attack unfeasible by this means. However, an example using a real access point and a USB Wi-Fi card will be shown (a typical setup for carrying out Wi-Fi attacks from a Kali Linux terminal). Specifically, the access point is a [`TP-LINK AC1200`](https://www.tp-link.com/es/home-networking/wifi-router/archer-c1200/):
 <img width="590" height="443" alt="image" src="https://github.com/user-attachments/assets/4056eebd-fdd5-4195-a8c2-b76b2c16fded" />
 
-Mientras que la tarjeta inalámbrica, la cual se usará con una máquina virtual de Kali Linux, se trata de una [`ALFA NETWORK AWUS036NHR`](https://www.amazon.es/Network-AWUS036NHR-150Mbit-adaptador-tarjeta/dp/B005ETA5K2):
+Meanwhile, the wireless card, which will be used with a Kali Linux virtual machine, is an [`ALFA NETWORK AWUS036NHR`](https://www.amazon.es/Network-AWUS036NHR-150Mbit-adaptador-tarjeta/dp/B005ETA5K2):
 <img width="771" height="1463" alt="image" src="https://github.com/user-attachments/assets/49e21ab2-6114-49bd-bcd3-667e9f4b5bc3" />
 
-Una vez se inicia la máquina virtual [`Kali Linux`](https://www.osboxes.org/kali-linux/) se debe conectar la tarjeta de red de la siguiente manera:
+Once the [`Kali Linux`](https://www.osboxes.org/kali-linux/) virtual machine is started, the network card must be connected as follows:
 <img width="1132" height="396" alt="image" src="https://github.com/user-attachments/assets/df583d4f-1979-4b83-b03c-e7f2ce1212a8" />
 
-De esta forma con `ifconfig` se visualiza el nombre de la interfaz introducida, repitiendo todos los pasos vistos anteriormente para realizar el ataque:
-**Máquina del atacante:**
+This way, `ifconfig` shows the name of the inserted interface, and all the steps seen above are repeated in order to perform the attack:
+**Attacker machine:**
 <img width="754" height="847" alt="image" src="https://github.com/user-attachments/assets/23b5c58f-d316-4f53-8537-295e7c90fa56" />
 <img width="951" height="655" alt="image" src="https://github.com/user-attachments/assets/abfa5d6d-cfbe-4595-a989-1b67cbf78623" />
 
@@ -74,39 +74,39 @@ De esta forma con `ifconfig` se visualiza el nombre de la interfaz introducida, 
 <img width="834" height="839" alt="image" src="https://github.com/user-attachments/assets/3395a0ee-64c7-4151-9b53-054a44db1201" />
 <img width="790" height="859" alt="image" src="https://github.com/user-attachments/assets/b4ab7cce-12c1-4cdc-b7bb-fc1035e7431d" />
 `...`
-**Reinicio para evitar desbloqueo en el punto de acceso:**
+**Restart to avoid unlock on the access point:**
 <img width="717" height="579" alt="image" src="https://github.com/user-attachments/assets/db05fdbe-c073-4f78-8e3a-01544545e345" />
-**Tras reiniciar:**
+**After restarting:**
 <img width="746" height="419" alt="image" src="https://github.com/user-attachments/assets/21761629-e0f2-429f-ba22-41e4c0bb0d01" />
 `...`
-**Tras varios reinicios y encontrar la clave:**
+**After several restarts and finding the key:**
 <img width="500" height="738" alt="image" src="https://github.com/user-attachments/assets/9e8cf606-5f0c-452b-92ae-ab1860faeb72" />
 
-**Punto de acceso:**
+**Access point:**
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/71f42b5b-2bf8-46d6-a4dc-91d8977d1bac" />
 
-Una vez se completa el ataque con las interfaces físicas se puede observar que se consigue fácilmente la clave, además, se confirma el uso de PIN con la salida `WPS PIN: Supported`. Con esto se demuestra que WPS es uno de los métodos más fáciles de romper, ya sea mediante PIN o los métodos que necesitan un accionamiento físico o por cercanía (basta con tener acceso físico al punto de acceso). Por tanto, su uso supone un gran riesgo a cambio de mucha comodidad, lo cual nos lleva a un dilema entre usabilidad y seguridad. Aunque no es la única solución elegir uno u otro, sino que puede usarse en determinados casos donde y cuando tenga sentido, sin suponer un riesgo demasiado alto.
+Once the attack is completed with physical interfaces, it can be observed that the key is obtained easily and that the use of a PIN is confirmed with the output `WPS PIN: Supported`. This demonstrates that WPS is one of the easiest methods to break, whether via PIN or via methods that require physical interaction or proximity (physical access to the access point is enough). Therefore, its use entails a major risk in exchange for a lot of convenience, which leads to a dilemma between usability and security. However, the only solution is not necessarily to choose one or the other; it can also be used in certain cases where and when it makes sense, without posing an excessively high risk.
 
-Sin embargo, hoy en día no resulta tan fácil de explotar como parece, ya que el ataque anterior solo ha sido posible gracias a reiniciar WPS en el punto de acceso TP-LINK. Esto se debe a que los fabricantes de los puntos de acceso modernos (a partir de 2015 aproximadamente) empezaron a implementar bloqueos en WPS tras varios intentos continuados que van desde un tiempo de inactividad hasta cortar toda actividad de WPS en los puntos de acceso. En concreto, cuando se llegaba a bloquear por completo era necesario el reinicio de WPS para poder seguir haciendo pruebas. Esto no impide por completo el ataque, pero permite ver a los administradores que alguien intenta conectarse forzasamente, haciendo que se piensen si deben reactivarlo. Esta funcionalidad es muy buena para detener ataques de fuerza bruta, pero únicamente en el caso de manejarla adecuadamente. A continuación, se usa de nuevo la estructura que proporciona el laboratorio para realizar un ataque de fuerza bruta personalizado, el cual se ejecuta administrando tanto correcta, como incorrectamente los bloqueos WPS.
+However, nowadays it is not as easy to exploit as it seems, since the previous attack was only possible thanks to restarting WPS on the TP-LINK access point. This is because manufacturers of modern access points (roughly from 2015 onwards) began implementing WPS lockouts after several continuous attempts, ranging from a timeout to completely disabling all WPS activity on access points. Specifically, when it became fully locked, WPS had to be restarted in order to continue testing. This does not completely prevent the attack, but it allows administrators to see that someone is attempting to connect forcefully, which may cause them to reconsider whether they should reactivate it. This functionality is very good for stopping brute-force attacks, but only if it is handled properly. Next, the lab structure is used again to perform a custom brute-force attack, which is run while handling WPS lockouts both correctly and incorrectly.
 
-En primer lugar, se inicia el laboratorio y la máquina del atacante de la misma forma que se ha hecho hasta ahora:
-```
+First, the lab and the attacker machine are started in the same way as before:
+```bash
 sudo ./launch.sh
 docker-compose exec attacker-1 bash 
 ```
-A continuación, se ejecuta el script [`wps_cracker.sh`]() (se aconseja analizar su comportamiento y comprobar que la interfaz de red que utiliza es la de la máquina atacante):
-```
+Next, the [`wps_cracker.sh`]() script is run (it is recommended to analyze its behavior and verify that the network interface it uses is the one belonging to the attacker machine):
+```bash
 ./wps_cracker.sh
 ```
-Este script en líneas generales intenta ejecutar un ataque basado en fuerza bruta, el cual prueba PINs válidos mediante la herramienta `wps_reg` de `wpa_supplicant`, la misma que se usa en los clientes legítimos para conectarlos mediante WPS. En concreto, esta herramienta trata de usar el WPS para obtener la configuración WPA/WPA2 para poder conectarse en primera instancia y recordar dicha configuración (`wpa_supplicant.conf`) cuando traten de volver a conectarse en nuevas ocasiones. Además, se hace uso de la herramienta `wash` para comprobar si se ha bloqueado WPS en el punto de acceso debido a los repetidos intentos, esperando hasta que este se desbloquee antes de probar la próxima clave.
+Broadly speaking, this script attempts to run a brute-force-based attack that tries valid PINs through the `wps_reg` tool from `wpa_supplicant`, the same tool used by legitimate clients to connect via WPS. Specifically, this tool attempts to use WPS to obtain the WPA/WPA2 configuration in order to connect initially and remember that configuration (`wpa_supplicant.conf`) when trying to reconnect later. In addition, it makes use of the `wash` tool to check whether WPS has been locked on the access point due to repeated attempts, waiting until it is unlocked before trying the next key.
 
-Por otro lado, el script también hace uso de la herramienta [`wpspin`](https://github.com/drygdryg/wpspin-nim) que proporciona PINs válidos de WPS según la dirección MAC del punto de acceso. Esto es típico en labores de hacking ya que permite reducir de manera inteligente el espacio de búsqueda en ataques de fuerza bruta, haciendo incluso que ataques que a priori puedan parecer inviables, lleguen a ser posibles. 
+On the other hand, the script also uses the [`wpspin`](https://github.com/drygdryg/wpspin-nim) tool, which provides valid WPS PINs according to the MAC address of the access point. This is typical in hacking tasks because it makes it possible to intelligently reduce the search space in brute-force attacks, even making attacks that might initially seem unfeasible become possible.
 
-Empezando por la versión que gestiona correctamente los bloqueos WPS, se aprecia en el [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/WPS/internal/wireless/AP/Dockerfile) de punto de acceso cómo el dispositivo que interpreta al punto de acceso usa el script [`check_locked.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/WPS/internal/wireless/AP/check_locked.sh) (se aconseja analizar su contenido, así como comprobar que la interfaz que utiliza es la de la máquina correspondiente):
+Starting with the version that correctly handles WPS lockouts, it can be seen in the access point [`Dockerfile`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/WPS/internal/wireless/AP/Dockerfile) how the device acting as the access point uses the [`check_locked.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/WPS/internal/wireless/AP/check_locked.sh) script (it is recommended to analyze its contents, as well as verify that the interface it uses is the one belonging to the corresponding machine):
 
-Este script reinicia la herramienta `hostapd` que proporciona la funcionalidad de punto de acceso WiFi, además de recoger el log de este junto a mensajes personalizados en `/var/log/hostapd-wps.log`. Con esto se evita que se quede bloqueado permanentemente tras una serie de intentos, deteniendo así el ataque de fuerza bruta (la clave que usa ha sido escogida a drede entre las últimas que se prueban). Con el uso por defecto de este script al arrancar la máquina y repitiendo el script de ataque desde la máquina Kali, se obtiene el siguiente resultado:
-```
-# Máquina atacnate
+This script restarts the `hostapd` tool, which provides the Wi-Fi access point functionality, and also collects its log together with custom messages in `/var/log/hostapd-wps.log`. This prevents it from remaining permanently locked after a series of attempts, thus stopping the brute-force attack (the key it uses has been deliberately chosen from among the last ones to be tested). With the default use of this script when starting the machine and repeating the attack script from the Kali machine, the following result is obtained:
+```bash
+# Attacker machine
 ./wps_cracker.sh
 ```
 <img width="1213" height="817" alt="image" src="https://github.com/user-attachments/assets/b8f4ae24-1321-4c46-bead-b6dec5901c33" />
@@ -115,12 +115,12 @@ Este script reinicia la herramienta `hostapd` que proporciona la funcionalidad d
 <img width="1202" height="654" alt="image" src="https://github.com/user-attachments/assets/0e6f0ee0-2ae7-4d74-9a24-6d57d37f8381" />
 <img width="1206" height="233" alt="image" src="https://github.com/user-attachments/assets/5810b1bc-3591-49c0-8ef0-f49cb9078754" />
 
-Como se aprecia, se obtiene un resultado parecido al conseguido con `reaver` y las interfaces físicas, lo cual supone encontrar el PIN WPS del punto de acceso, así como la obtención de la configuración WPA/WPA2. 
-Por otro lado, también se puede visualizar lo que está sucediendo en el punto de acceso, donde se aprecia el punto de reinicio y cómo evolucionan los bloqueos WPS:
-```
-# Log en tiempo real
+As can be seen, a result similar to the one obtained with `reaver` and physical interfaces is achieved, which means discovering the WPS PIN of the access point, as well as obtaining the WPA/WPA2 configuration.
+On the other hand, it is also possible to view what is happening on the access point, where the restart point can be seen along with how the WPS lockouts evolve:
+```bash
+# Real-time log
 tail -f /var/log/hostapd-wps.log
-# Log completo
+# Full log
 cat /var/log/hostapd-wps.log
 ```
 <img width="1267" height="820" alt="image" src="https://github.com/user-attachments/assets/0deeaed3-9f3a-45af-8d5a-ebe06338ab97" />
@@ -128,10 +128,10 @@ cat /var/log/hostapd-wps.log
 <img width="1268" height="817" alt="image" src="https://github.com/user-attachments/assets/5189f0d2-0997-4950-b674-05885c91eb8a" />
 <img width="1282" height="839" alt="image" src="https://github.com/user-attachments/assets/a8bf82da-fe82-4dcc-8abb-b112d36afde1" />
 
-Sin embargo, si se comenta la parte clave del script [`check_locked.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/blob/WPS/internal/wireless/AP/check_locked.sh) que reinicia el punto de acceso, para hacer un buen manejo de los bloqueos WPS:
+However, if the key part of the [`check_locked.sh`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/blob/WPS/internal/wireless/AP/check_locked.sh) script that restarts the access point is commented out, in order to manage WPS lockouts properly:
 <img width="613" height="66" alt="image" src="https://github.com/user-attachments/assets/c2af9291-0a43-4adc-82c9-0d97fa15a317" />
 
-se obtiene el siguiente resultado:
+the following result is obtained:
 <img width="1213" height="842" alt="image" src="https://github.com/user-attachments/assets/57998c27-c83c-42e3-83ca-81839c608beb" />
 <img width="1204" height="536" alt="image" src="https://github.com/user-attachments/assets/49116ae6-1558-4f6a-b6e8-02e0c0a4ac3d" />
 
@@ -139,12 +139,12 @@ se obtiene el siguiente resultado:
 <img width="1270" height="799" alt="image" src="https://github.com/user-attachments/assets/b0f047c7-7413-460c-809f-584b9e2cbf9f" />
 <img width="1269" height="735" alt="image" src="https://github.com/user-attachments/assets/36df9fb9-3626-4ede-a580-7ba11e66d85e" />
 
-Aquí se aprecia como el ataque ya no tiene resultado, ya que se ejecuta un bloqueo permanente de WPS en el punto de acceso tras varios intentos de PIN (además se aprecian otros bloqueos de menor tiempo). De esta forma, hasta el momento que un administrador no reinicie el punto de acceso, este ataque se verá bloqueado. De esta forma se aprecia la importancia de una buena gestión frente a reinicios sin comprobaciones que no permiten detectar al atacante, dejando que su ataque siga tras reiniciar la máquina que actúa como punto de acceso WiFi.
+Here it can be seen that the attack no longer succeeds, since a permanent WPS lockout is triggered on the access point after several PIN attempts (other shorter lockouts can also be seen). In this way, until an administrator restarts the access point, this attack will remain blocked. This shows the importance of proper management versus restarts without checks, which do not allow the attacker to be detected and let the attack continue after the machine acting as the Wi-Fi access point is restarted.
 
-### Contramedidas y Recomendaciones
-De forma que es recomendable evitar facilitar el acceso a los botones o NFC, e incluso evitar directamente estas opciones debido a su gran peligrosidad. Además, para paliar sus efectos, se recomienda usar las últimas versiones de WPS, las cuales cuentan con mitigaciones a estos ataques, por ejemplo, con bloqueos de WPS tras múltiples intentos fallidos, tal y como se ha visto en la fase de ataque. Sin embargo, por norma general se recomienda deshabilitar cualquier método WPS fuera de un entrono controlado, poniendo especial atención en aquellos dispositivos que traen configurada esta tecnología por defecto. Una buena opción de uso es activarlo durante pequeños periodos de tiempo en los que el administrador sea consciente de los clientes que se conectan en ese momento y monitoreando esto a ser posible (e incluso activar alguna iptable que bloquee algún dispositivo que lanza demasiados intentos si el dispositivo no hace bloqueos de WPS tras múltiples intentos fallidos por defecto). 
+### Countermeasures and Recommendations
+Therefore, it is advisable to avoid making access to buttons or NFC easy, and even to avoid these options altogether due to how dangerous they are. In addition, to mitigate their effects, it is recommended to use the latest versions of WPS, which include mitigations against these attacks, such as WPS lockouts after multiple failed attempts, as seen during the attack phase. However, as a general rule, it is recommended to disable any WPS method outside a controlled environment, paying special attention to devices that come with this technology enabled by default. A good way to use it is to activate it during short periods of time in which the administrator is aware of which clients are connecting at that moment, and ideally monitoring this activity (and even enabling some iptable that blocks any device making too many attempts if the device does not enforce WPS lockouts after multiple failed attempts by default).
 
-`Recordatorio: ` Se aconseja repetir los [ataques](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/Attacks) realizados tras conseguir acceso con la configuración de este capítulo para ver que una vez dentro la seguridad elegida en el punto de acceso es irelevante, permitiendo así los mismos resultados. 
+`Reminder:` It is advisable to repeat the [attacks](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/Attacks) carried out after gaining access using the configuration from this chapter, in order to see that once inside, the security chosen on the access point becomes irrelevant, thus allowing the same results.
 
-[`Lección anterior, cracking de redes WPA/WPA2 PSK`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-PSK)
-[`Siguiente lección, cracking de redes WPA/WPA2 EAP`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course/tree/WPA/WPA2-RADIUS)
+[`Previous lesson, cracking WPA/WPA2 PSK networks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-PSK)
+[`Next lesson, cracking WPA/WPA2 EAP networks`](https://github.com/carlosdomim02/Wi-Fi-Hacking-Course-English/tree/WPA/WPA2-RADIUS)
